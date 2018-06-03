@@ -408,5 +408,6 @@
       <ResourceRoot />
       <Visible>False</Visible>
     </Resources>
+    <Compile Include="GameObjects\Components\Audio\SharedAudioPlayerComponent.cs" />
   </ItemGroup>
 </Project>

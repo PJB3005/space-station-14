@@ -1,4 +1,5 @@
-﻿using SS14.Client.Interfaces.GameObjects;
+﻿using SS14.Client.GameObjects.Components.Audio;
+using SS14.Client.Interfaces.GameObjects;
 using SS14.Client.Interfaces.GameObjects.Components;
 using SS14.Shared.GameObjects;
 using SS14.Shared.Interfaces.GameObjects.Components;
@@ -35,6 +36,8 @@ namespace SS14.Client.GameObjects
 
             Register<EyeComponent>();
             RegisterIgnore("AiController");
+
+            Register<AudioPlayerComponent>();
         }
     }
 }
