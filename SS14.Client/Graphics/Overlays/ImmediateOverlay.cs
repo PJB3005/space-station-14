@@ -11,18 +11,21 @@ using VS = Godot.VisualServer;
 
 namespace SS14.Client.Graphics.Overlays
 {
-    public abstract class Overlay : IOverlay
+    /// <summary>
+    ///     An overlay implementation that uses the standard 2D drawing API,
+    ///     and does not preserve state between redraws.
+    /// </summary>
+    public abstract class ImmediateOverlay : BaseOverlay, IDisposable
     {
-        protected IOverlayManager OverlayManager { get; }
-        public string ID { get; }
-
         public virtual bool AlwaysDirty => false;
         public bool IsDirty => AlwaysDirty || _isDirty;
         public bool Drawing { get; private set; } = false;
 
-        public virtual OverlaySpace Space => OverlaySpace.ScreenSpace;
-
         private Shader _shader;
+        /// <summary>
+        ///     The shader applied to the main canvas item.
+        /// </summary>
+        /// <seealso cref="SubHandlesUseMainShader" />
         public Shader Shader
         {
             get => _shader;
@@ -31,51 +34,36 @@ namespace SS14.Client.Graphics.Overlays
                 _shader = value;
                 if (MainCanvasItem != null)
                 {
-                    VS.CanvasItemSetMaterial(MainCanvasItem, value?.GodotMaterial?.GetRid());
+                    MainCanvasItem.Material = value.GodotMaterial;
                 }
             }
         }
 
-        private int? _zIndex;
-        public int? ZIndex
-        {
-            get => _zIndex;
-            set
-            {
-                if (value != null && (_zIndex > VS.CanvasItemZMax || _zIndex < VS.CanvasItemZMin))
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value));
-                }
-                _zIndex = value;
-                UpdateZIndex();
-            }
-        }
-
+        /// <summary>
+        ///     If true, new drawing handles created while drawing will use the same shader as the main shader,
+        ///     unless explicitly overriden.
+        /// </summary>
+        /// <seealso cref="Shader" />
         public virtual bool SubHandlesUseMainShader { get; } = true;
 
         private bool _isDirty = true;
-
-        private Godot.RID MainCanvasItem;
 
         private readonly List<Godot.RID> CanvasItems = new List<Godot.RID>();
         private readonly List<DrawingHandle> TempHandles = new List<DrawingHandle>();
 
         private bool Disposed = false;
 
-        protected Overlay(string id)
+        protected ImmediateOverlay(string id) : base(id)
         {
-            OverlayManager = IoCManager.Resolve<IOverlayManager>();
-            ID = id;
         }
 
-        public void AssignCanvasItem(Godot.RID canvasItem)
+        public override void AssignCanvasItem(Godot.CanvasItem canvasItem)
         {
-            MainCanvasItem = canvasItem;
+            base.AssignCanvasItem(canvasItem);
             if (Shader != null)
             {
-                Shader.ApplyToCanvasItem(MainCanvasItem);
+                MainCanvasItem.Material = Shader.GodotMaterial;
             }
-            UpdateZIndex();
         }
 
         public void Dispose()
@@ -89,14 +77,17 @@ namespace SS14.Client.Graphics.Overlays
             GC.SuppressFinalize(this);
         }
 
-        ~Overlay()
+        ~ImmediateOverlay()
         {
             Dispose(false);
         }
 
         protected virtual void Dispose(bool disposing)
         {
-            ClearDraw();
+            if (disposing && MainCanvasItem != null)
+            {
+                OverlayManager.RemoveOverlay(ID);
+            }
         }
 
         protected abstract void Draw(DrawingHandle handle);
@@ -109,7 +100,7 @@ namespace SS14.Client.Graphics.Overlays
             }
 
             var item = VS.CanvasItemCreate();
-            VS.CanvasItemSetParent(item, MainCanvasItem);
+            VS.CanvasItemSetParent(item, MainCanvasItem.GetCanvasItem());
             CanvasItems.Add(item);
             if (shader != null)
             {
@@ -130,7 +121,7 @@ namespace SS14.Client.Graphics.Overlays
             _isDirty = true;
         }
 
-        public void FrameUpdate(RenderFrameEventArgs args)
+        public override void FrameUpdate(RenderFrameEventArgs args)
         {
             if (!IsDirty)
             {
@@ -142,7 +133,7 @@ namespace SS14.Client.Graphics.Overlays
             try
             {
                 Drawing = true;
-                Draw(new DrawingHandle(MainCanvasItem));
+                Draw(new DrawingHandle(MainCanvasItem.GetCanvasItem()));
             }
             finally
             {
@@ -155,10 +146,10 @@ namespace SS14.Client.Graphics.Overlays
             }
         }
 
-        public void ClearCanvasItem()
+        public override void ClearCanvasItem()
         {
             ClearDraw();
-            MainCanvasItem = null;
+            base.ClearCanvasItem();
         }
 
         private void ClearDraw()
@@ -168,7 +159,7 @@ namespace SS14.Client.Graphics.Overlays
                 VS.FreeRid(item);
             }
 
-            VS.CanvasItemClear(MainCanvasItem);
+            VS.CanvasItemClear(MainCanvasItem.GetCanvasItem());
 
             CanvasItems.Clear();
         }
@@ -182,13 +173,13 @@ namespace SS14.Client.Graphics.Overlays
 
             if (Space != OverlaySpace.WorldSpace || ZIndex == null)
             {
-                VS.CanvasItemSetZIndex(MainCanvasItem, 0);
-                VS.CanvasItemSetZAsRelativeToParent(MainCanvasItem, true);
+                VS.CanvasItemSetZIndex(MainCanvasItem.GetCanvasItem(), 0);
+                VS.CanvasItemSetZAsRelativeToParent(MainCanvasItem.GetCanvasItem(), true);
             }
             else
             {
-                VS.CanvasItemSetZIndex(MainCanvasItem, ZIndex.Value);
-                VS.CanvasItemSetZAsRelativeToParent(MainCanvasItem, false);
+                VS.CanvasItemSetZIndex(MainCanvasItem.GetCanvasItem(), ZIndex.Value);
+                VS.CanvasItemSetZAsRelativeToParent(MainCanvasItem.GetCanvasItem(), false);
             }
         }
     }

@@ -12,15 +12,15 @@ namespace SS14.Client.Scenes
 
         public GodotNode(string name) : base(name)
         {
-            InstanceSceneControl();
+            InstanceSceneNode();
         }
 
         public GodotNode() : base()
         {
-            InstanceSceneControl();
+            InstanceSceneNode();
         }
 
-        protected virtual void InstanceSceneControl(Godot.Node node = null)
+        protected virtual void InstanceSceneNode(Godot.Node node = null)
         {
             SceneNode = node ?? new Godot.Node();
         }

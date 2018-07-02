@@ -2,7 +2,7 @@
 
 namespace SS14.Client.Interfaces.Graphics.Overlays
 {
-    public interface IOverlay : IDisposable
+    public interface IOverlay
     {
         string ID { get; }
 
@@ -10,7 +10,7 @@ namespace SS14.Client.Interfaces.Graphics.Overlays
 
         void FrameUpdate(RenderFrameEventArgs args);
 
-        void AssignCanvasItem(Godot.RID canvasItem);
+        void AssignCanvasItem(Godot.CanvasItem canvasItem);
         void ClearCanvasItem();
     }
 

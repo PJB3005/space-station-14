@@ -43,7 +43,7 @@ namespace SS14.Client.Debugging
             }
         }
 
-        private class CollidableOverlay : Overlay
+        private class CollidableOverlay : ImmediateOverlay
         {
             [Dependency]
             readonly IComponentManager componentManager;

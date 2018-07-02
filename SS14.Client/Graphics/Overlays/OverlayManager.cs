@@ -20,7 +20,7 @@ namespace SS14.Client.Graphics.Overlays
         [Dependency]
         readonly ISceneTreeHolder sceneTreeHolder;
 
-        private readonly Dictionary<string, (IOverlay overlay, Godot.RID canvasItem)> overlays = new Dictionary<string, (IOverlay, Godot.RID)>();
+        private readonly Dictionary<string, (IOverlay overlay, Godot.CanvasItem canvasItem)> overlays = new Dictionary<string, (IOverlay, Godot.CanvasItem)>();
 
         public void Initialize()
         {
@@ -46,21 +46,22 @@ namespace SS14.Client.Graphics.Overlays
             {
                 throw new InvalidOperationException($"We already have an overlay with ID '{overlay.ID}'");
             }
-            Godot.RID parent;
+            Godot.Node parent;
             switch (overlay.Space)
             {
                 case OverlaySpace.ScreenSpace:
-                    parent = RootNodeScreen.GetCanvasItem();
+                    parent = RootNodeScreen;
                     break;
                 case OverlaySpace.WorldSpace:
-                    parent = RootNodeWorld.GetCanvasItem();
+                    parent = RootNodeWorld;
                     break;
                 default:
                     throw new NotImplementedException($"Unknown overlay space: {overlay.Space}");
             }
-            var item = VS.CanvasItemCreate();
-            VS.CanvasItemSetParent(item, parent);
-
+            var item = new Godot.Node2D
+            {
+                Name = overlay.ID,
+            };
             overlays.Add(overlay.ID, (overlay, item));
             overlay.AssignCanvasItem(item);
         }
@@ -88,7 +89,8 @@ namespace SS14.Client.Graphics.Overlays
             }
             var (overlay, item) = value;
             overlay.ClearCanvasItem();
-            VS.FreeRid(item);
+            item.QueueFree();
+            item.Dispose();
             overlays.Remove(id);
         }
 
