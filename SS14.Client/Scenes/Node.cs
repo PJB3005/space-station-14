@@ -108,7 +108,7 @@ namespace SS14.Client.Scenes
             return _children.ContainsKey(name);
         }
 
-        public void AddChild(Node child, bool autoRenameNode=true)
+        public virtual void AddChild(Node child, bool autoRenameNode=true)
         {
             if (child.IsParented)
             {
@@ -129,7 +129,7 @@ namespace SS14.Client.Scenes
             child.Parent = this;
         }
 
-        public void RemoveChild(Node child)
+        public virtual void RemoveChild(Node child)
         {
             if (!TryGetChild(child.Name, out var trychild) || trychild != child)
             {

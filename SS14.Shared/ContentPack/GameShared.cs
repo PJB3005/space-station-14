@@ -7,8 +7,13 @@ namespace SS14.Shared.ContentPack
     /// </summary>
     public abstract class GameShared : IDisposable
     {
-        public virtual void Init()
+        public virtual void PreInit()
         {
+        }
+
+        public virtual void PostInit()
+        {
+
         }
 
         public virtual void Update(AssemblyLoader.UpdateLevel level, float frameTime)

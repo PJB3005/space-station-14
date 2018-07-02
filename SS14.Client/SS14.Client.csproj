@@ -287,7 +287,7 @@
     <Compile Include="GameObjects\PlayerMessages.cs" />
     <Compile Include="Graphics\Shaders\Params.cs" />
     <Compile Include="Scenes\Node.cs" />
-    <Compile Include="Scenes\2D\Sprite.cs" />
+    <Compile Include="Scenes\2D\SpriteNode.cs" />
     <Compile Include="Scenes\2D\RsiSprite.cs" />
     <Compile Include="Graphics\Overlays\ImmediateOverlay.cs" />
     <Compile Include="Graphics\Overlays\SceneOverlay.cs" />

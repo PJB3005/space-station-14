@@ -27,7 +27,7 @@ namespace Sandbox.Server
         private bool _countdownStarted;
 
         /// <inheritdoc />
-        public override void Init()
+        public override void PreInit()
         {
             base.Init();
 

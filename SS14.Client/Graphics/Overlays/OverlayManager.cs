@@ -62,6 +62,7 @@ namespace SS14.Client.Graphics.Overlays
             {
                 Name = overlay.ID,
             };
+            parent.AddChild(item);
             overlays.Add(overlay.ID, (overlay, item));
             overlay.AssignCanvasItem(item);
         }

@@ -24,5 +24,25 @@ namespace SS14.Client.Scenes
         {
             SceneNode = node ?? new Godot.Node();
         }
+
+        public override void AddChild(Node child, bool autoRenameNode = true)
+        {
+            base.AddChild(child, autoRenameNode);
+
+            if (child is GodotNode gdNode)
+            {
+                SceneNode.AddChild(gdNode.SceneNode);
+            }
+        }
+
+        public override void RemoveChild(Node child)
+        {
+            base.RemoveChild(child);
+
+            if (child is GodotNode gdNode)
+            {
+                SceneNode.RemoveChild(gdNode.SceneNode);
+            }
+        }
     }
 }

@@ -127,8 +127,8 @@ namespace SS14.Client
                 Logger.Warning($"[ENG] Could not load any Client DLL.");
             }
 
-            // Call Init in game assemblies.
-            AssemblyLoader.BroadcastRunLevel(AssemblyLoader.RunLevel.Init);
+            // Call PreInit in game assemblies.
+            AssemblyLoader.BroadcastRunLevel(AssemblyLoader.RunLevel.PreInit);
 
             eyeManager.Initialize();
             _serializer.Initialize();
@@ -149,6 +149,8 @@ namespace SS14.Client
             _client.Initialize();
 
             _stateManager.RequestStateChange<MainScreen>();
+
+            AssemblyLoader.BroadcastRunLevel(AssemblyLoader.RunLevel.PostInit);
         }
 
         public override void QuitRequest()

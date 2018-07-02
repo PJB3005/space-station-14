@@ -222,7 +222,7 @@ namespace SS14.Server
             IoCManager.Resolve<IPlacementManager>().Initialize();
 
             // Call Init in game assemblies.
-            AssemblyLoader.BroadcastRunLevel(AssemblyLoader.RunLevel.Init);
+            AssemblyLoader.BroadcastRunLevel(AssemblyLoader.RunLevel.PreInit);
 
             IoCManager.Resolve<ITileDefinitionManager>().Initialize();
 
@@ -237,6 +237,7 @@ namespace SS14.Server
             consoleManager.Initialize();
 
             OnRunLevelChanged(ServerRunLevel.PreGame);
+            AssemblyLoader.BroadcastRunLevel(AssemblyLoader.RunLevel.PostInit);
 
             return false;
         }
