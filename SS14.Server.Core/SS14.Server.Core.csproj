@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp2.0</TargetFramework>
+        <RootNamespace>SS14.Server</RootNamespace>
+        <Configurations>Debug;Release</Configurations>
+        <Platforms>AnyCPU;x64</Platforms>
+        <OutputPath>../bin/$(Platform)/$(Configuration)/</OutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+      <DefineConstants>TRACE;DEBUG;NETCOREAPP2_0;X64</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+      <DefineConstants>TRACE;RELEASE;NETCOREAPP2_0;X64</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Lidgren.Network.Standard\Lidgren.Network.Standard.csproj" />
+      <ProjectReference Include="..\SS14.Shared.Maths.Standard\SS14.Shared.Maths.Standard.csproj" />
+      <ProjectReference Include="..\SS14.Shared.Standard\SS14.Shared.Standard.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="CommandLineParser" Version="1.9.71" />
+      <PackageReference Include="ConcurrentDataStructures" Version="0.2.0" />
+      <PackageReference Include="JetBrains.Annotations" Version="2018.2.1" />
+      <PackageReference Include="YamlDotNet" Version="5.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="server_config.toml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
+</Project>

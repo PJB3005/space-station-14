@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <RootNamespace>Lidgren.Network</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Remove="Platform\**" />
+      <Compile Remove="NetIncomingMessage.*.cs" />
+      <Compile Remove="NetOutgoingMessage.*.cs" />
+      <Compile Remove="NetRandomSeed.cs" />
+      <Compile Remove="NetRandom.Implementations.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="Platform\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Platform\**" />
+    </ItemGroup>
+
+</Project>
