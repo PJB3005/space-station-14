@@ -1,0 +1,3 @@
+[submodule "Submodules/SharpFont"]
+	path = Submodules/SharpFont
+	url = https://github.com/space-wizards/SharpFont.git
