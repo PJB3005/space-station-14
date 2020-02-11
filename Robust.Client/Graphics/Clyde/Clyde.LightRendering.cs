@@ -71,12 +71,7 @@ namespace Robust.Client.Graphics.Clyde
 
             _fovDepthTextureObject = _fovRenderTarget.Texture;
 
-            // Shadow FBO.
-            _shadowRenderTarget = CreateRenderTarget((ShadowMapSize, MaxLightsPerScene),
-                new RenderTargetFormatParameters(RenderTargetColorFormat.R32F, true),
-                new TextureSampleParameters {WrapMode = TextureWrapMode.Repeat}, "Shadow depth render target.");
-
-            _shadowTextureObject = _shadowRenderTarget.Texture;
+            _lightingInit = true;
         }
 
         private void LoadLightingShaders()
