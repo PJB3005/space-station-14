@@ -25,7 +25,8 @@ namespace Robust.Client.ResourceManagement.ResourceTypes
             }
 
             var clyde = IoCManager.Resolve<IClydeInternal>();
-            ClydeHandle = clyde.LoadShader(ParsedShader, path.ToString());
+            var pathStr = path.ToString();
+            ClydeHandle = clyde.LoadShader(ParsedShader, pathStr);
         }
 
         public override void Reload(IResourceCache cache, ResourcePath path)

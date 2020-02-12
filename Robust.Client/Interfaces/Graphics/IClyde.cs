@@ -24,6 +24,8 @@ namespace Robust.Client.Interfaces.Graphics
 
         void ReloadShaders();
 
+        void WatchShadersAndReload(bool enabled);
+
     }
 
     // TODO: Maybe implement IDisposable for render targets. I got lazy and didn't.
