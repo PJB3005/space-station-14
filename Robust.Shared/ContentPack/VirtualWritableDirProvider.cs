@@ -17,7 +17,7 @@ namespace Robust.Shared.ContentPack
         private readonly DirectoryNode _rootDirectoryNode = new DirectoryNode();
 
         /// <inheritdoc />
-        public string RootDir => null;
+        public string? RootDir => null;
 
         public void CreateDir(ResourcePath path)
         {

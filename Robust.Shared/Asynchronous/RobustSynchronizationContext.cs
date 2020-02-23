@@ -16,9 +16,9 @@ namespace Robust.Shared.Asynchronous
             _runtimeLog = runtimeLog;
         }
 
-        private readonly BlockingCollection<(SendOrPostCallback d, object state)> _pending = new BlockingCollection<(SendOrPostCallback, object)>();
+        private readonly BlockingCollection<(SendOrPostCallback d, object? state)> _pending = new BlockingCollection<(SendOrPostCallback, object?)>();
 
-        public override void Send(SendOrPostCallback d, object state)
+        public override void Send(SendOrPostCallback d, object? state)
         {
             if (Current != this)
             {
@@ -31,7 +31,7 @@ namespace Robust.Shared.Asynchronous
             d(state);
         }
 
-        public override void Post(SendOrPostCallback d, object state)
+        public override void Post(SendOrPostCallback d, object? state)
         {
             _pending.Add((d, state));
         }

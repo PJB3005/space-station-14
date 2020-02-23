@@ -14,7 +14,7 @@ namespace Robust.Shared.ContentPack
         class PackLoader : IContentRoot
         {
             private readonly FileInfo _pack;
-            private ZipFile _zip;
+            private ZipFile _zip = null!;
 
             /// <summary>
             ///     Constructor.

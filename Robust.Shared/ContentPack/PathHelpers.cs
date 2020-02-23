@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using Robust.Shared.Utility;
 
 namespace Robust.Shared.ContentPack
 {
@@ -18,7 +19,8 @@ namespace Robust.Shared.ContentPack
             // TODO: remove this shitty hack, either through making it less hardcoded into shared,
             //   or by making our file structure less spaghetti somehow.
             var assembly = typeof(PathHelpers).Assembly;
-            var pathUri = new Uri(assembly.CodeBase);
+            DebugTools.AssertNotNull(assembly.CodeBase);
+            var pathUri = new Uri(assembly.CodeBase!);
             var path = pathUri.LocalPath;
             if (pathUri.Fragment != "")
             {

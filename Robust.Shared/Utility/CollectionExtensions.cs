@@ -26,6 +26,7 @@ namespace Robust.Shared.Utility
         }
 
         public static Dictionary<TKey, TValue> ShallowClone<TKey, TValue>(this Dictionary<TKey, TValue> self)
+            where TKey : notnull
         {
             var dict = new Dictionary<TKey, TValue>(self.Count);
             foreach (var item in self)

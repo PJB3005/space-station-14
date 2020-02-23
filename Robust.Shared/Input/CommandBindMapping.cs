@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Robust.Shared.Input
 {
@@ -20,7 +21,7 @@ namespace Robust.Shared.Input
         /// <param name="function">Key function to get the input handler of.</param>
         /// <param name="handler">command handler that was bound to the key function (if any).</param>
         /// <returns>True if the key function had a handler to return.</returns>
-        bool TryGetHandler(BoundKeyFunction function, out InputCmdHandler handler);
+        bool TryGetHandler(BoundKeyFunction function, [NotNullWhen(true)] out InputCmdHandler? handler);
 
         /// <summary>
         ///     Unbinds the command handler from a key function.
@@ -41,7 +42,7 @@ namespace Robust.Shared.Input
         }
 
         /// <inheritdoc />
-        public bool TryGetHandler(BoundKeyFunction function, out InputCmdHandler handler)
+        public bool TryGetHandler(BoundKeyFunction function, [NotNullWhen(true)] out InputCmdHandler? handler)
         {
             return _commandBinds.TryGetValue(function, out handler);
         }

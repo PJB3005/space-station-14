@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Robust.Shared.Utility;
 
 namespace Robust.Shared
 {
@@ -26,7 +27,9 @@ namespace Robust.Shared
             {
                 if (name == $"{baseName}.dll")
                 {
-                    var assemblyDir = Path.GetDirectoryName(assembly.Location);
+                    var assemblyDir = Path.GetDirectoryName(assembly.Location)!;
+
+                    DebugTools.AssertNotNull(assemblyDir);
 
                     string libName;
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))

@@ -20,10 +20,6 @@ namespace Robust.Shared.GameObjects
     [Prototype("entity")]
     public class EntityPrototype : IPrototype, IIndexedPrototype, ISyncingPrototype
     {
-#pragma warning disable 649
-        [Dependency] private readonly ILocalizationManager _localization;
-#pragma warning restore 649
-
         /// <summary>
         /// The type string of this prototype used in files.
         /// </summary>
@@ -146,7 +142,7 @@ namespace Robust.Shared.GameObjects
 
             if (mapping.TryGetNode("name", out YamlNode node))
             {
-                Name = _localization.GetString(node.AsString());
+                Name = Loc.GetString(node.AsString());
             }
 
             if (mapping.TryGetNode("parent", out node))
@@ -157,7 +153,7 @@ namespace Robust.Shared.GameObjects
             // DESCRIPTION
             if (mapping.TryGetNode("description", out node))
             {
-                Description = _localization.GetString(node.AsString());
+                Description = Loc.GetString(node.AsString());
             }
 
             // COMPONENTS

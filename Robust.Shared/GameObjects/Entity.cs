@@ -210,7 +210,7 @@ namespace Robust.Shared.GameObjects
         }
 
         /// <inheritdoc />
-        public void SendNetworkMessage(IComponent owner, ComponentMessage message, INetChannel channel = null)
+        public void SendNetworkMessage(IComponent owner, ComponentMessage message, INetChannel? channel = null)
         {
             EntityManager.EntityNetManager.SendComponentNetworkMessage(channel, this, owner, message);
         }

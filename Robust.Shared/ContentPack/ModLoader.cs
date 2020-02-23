@@ -57,13 +57,11 @@ namespace Robust.Shared.ContentPack
     /// </summary>
     internal class ModLoader : IModLoader, IDisposable
     {
-#pragma warning disable 649
-        [Dependency] private readonly IReflectionManager _reflectionManager;
-        [Dependency] private readonly IResourceManager _resourceManager;
-        [Dependency] private readonly ILogManager _logManager;
-#pragma warning restore 649
+        [Dependency] private readonly IReflectionManager _reflectionManager = null!;
+        [Dependency] private readonly IResourceManager _resourceManager = null!;
+        [Dependency] private readonly ILogManager _logManager = null!;
 
-        private ModuleTestingCallbacks _testingCallbacks;
+        private ModuleTestingCallbacks? _testingCallbacks;
 
         /// <summary>
         ///     Loaded assemblies.
@@ -88,7 +86,7 @@ namespace Robust.Shared.ContentPack
             _loadContext.Resolving += ResolvingAssembly;
         }
 
-        public virtual void LoadGameAssembly<T>(Stream assembly, Stream symbols = null)
+        public virtual void LoadGameAssembly<T>(Stream assembly, Stream? symbols = null)
             where T : GameShared
         {
             // TODO: Re-enable type check when it's not just a giant pain in the butt.

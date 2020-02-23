@@ -44,7 +44,7 @@ namespace Robust.Shared.Network
         /// <summary>
         /// Initializes the string table.
         /// </summary>
-        public void Initialize(INetManager network, InitCallback callback = null)
+        public void Initialize(INetManager network, InitCallback? callback = null)
         {
             DebugTools.Assert(!_initialized);
 
@@ -259,7 +259,7 @@ namespace Robust.Shared.Network
         public MsgStringTableEntries(INetChannel channel) : base(NAME, GROUP) { }
         #endregion
 
-        public Entry[] Entries { get; set; }
+        public Entry[]? Entries { get; set; }
 
         /// <summary>
         ///     A string table entry.
@@ -269,7 +269,7 @@ namespace Robust.Shared.Network
             /// <summary>
             ///     The string contained inside of the message.
             /// </summary>
-            public string String { get; set; }
+            public string? String { get; set; }
 
 
             /// <summary>

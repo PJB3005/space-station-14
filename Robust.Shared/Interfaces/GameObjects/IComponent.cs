@@ -110,7 +110,7 @@ namespace Robust.Shared.Interfaces.GameObjects
         /// <param name="netChannel">If this originates from a remote client, this is the channel it came from. If it
         /// originates locally, this is null.</param>
         /// <param name="component">If the message originates from a local component, this is the component that sent it.</param>
-        void HandleMessage(ComponentMessage message, INetChannel netChannel = null, IComponent component = null);
+        void HandleMessage(ComponentMessage message, INetChannel? netChannel = null, IComponent? component = null);
 
         /// <summary>
         ///     Get the component's state for replicating on the client.

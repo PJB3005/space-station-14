@@ -30,7 +30,7 @@ namespace Robust.Shared.Interfaces.Resources
         /// <exception cref="FileNotFoundException">Thrown if <paramref name="pack"/> does not exist on disk.</exception>
         /// <exception cref="ArgumentException">Thrown if <paramref name="prefix"/> is not rooted.</exception>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="pack"/> is null.</exception>
-        void MountContentPack(string pack, ResourcePath prefix = null);
+        void MountContentPack(string pack, ResourcePath? prefix = null);
 
         /// <summary>
         ///     Adds a directory to search inside of to the VFS. The directory is relative to
@@ -41,7 +41,7 @@ namespace Robust.Shared.Interfaces.Resources
         /// <exception cref="DirectoryNotFoundException">Thrown if <paramref name="path"/> does not exist on disk.</exception>
         /// <exception cref="ArgumentException">Thrown if <paramref name="prefix"/> passed is not rooted.</exception>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="path"/> is null.</exception>
-        void MountContentDirectory(string path, ResourcePath prefix = null);
+        void MountContentDirectory(string path, ResourcePath? prefix = null);
 
         /// <summary>
         ///     Read a file from the mounted content roots.

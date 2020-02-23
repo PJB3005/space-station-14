@@ -62,7 +62,7 @@ namespace Robust.Shared.Serialization
         /// <param name="context">
         ///     An optional context that can provide additional capabitilies such as caching and custom type serializers.
         /// </param>
-        public static YamlObjectSerializer NewReader(YamlMappingNode readMap, Context context = null)
+        public static YamlObjectSerializer NewReader(YamlMappingNode readMap, Context? context = null)
         {
             return NewReader(new List<YamlMappingNode>(1) { readMap }, context);
         }
@@ -77,7 +77,7 @@ namespace Robust.Shared.Serialization
         /// <param name="context">
         ///     An optional context that can provide additional capabilities such as caching and custom type serializers.
         /// </param>
-        public static YamlObjectSerializer NewReader(List<YamlMappingNode> readMaps, Context context = null)
+        public static YamlObjectSerializer NewReader(List<YamlMappingNode> readMaps, Context? context = null)
         {
             return new YamlObjectSerializer
             {
@@ -97,7 +97,7 @@ namespace Robust.Shared.Serialization
         /// <param name="context">
         ///     An optional context that can provide additional capabitilies such as caching and custom type serializers.
         /// </param>
-        public static YamlObjectSerializer NewWriter(YamlMappingNode writeMap, Context context = null)
+        public static YamlObjectSerializer NewWriter(YamlMappingNode writeMap, Context? context = null)
         {
             return new YamlObjectSerializer
             {
@@ -181,7 +181,7 @@ namespace Robust.Shared.Serialization
             string name,
             TTarget defaultValue,
             Func<TSource, TTarget> ReadConvertFunc,
-            Func<TTarget, TSource> WriteConvertFunc = null,
+            Func<TTarget, TSource>? WriteConvertFunc = null,
             bool alwaysWrite = false)
         {
             if (Reading)
@@ -231,7 +231,7 @@ namespace Robust.Shared.Serialization
             string name,
             TTarget defaultValue,
             Func<TSource, TTarget> ReadConvertFunc,
-            Func<TTarget, TSource> WriteConvertFunc = null,
+            Func<TTarget, TSource>? WriteConvertFunc = null,
             bool alwaysWrite = false)
         {
             if (Reading)
@@ -566,7 +566,7 @@ namespace Robust.Shared.Serialization
                 foreach (var entry in (IEnumerable)obj)
                 {
                     var entryNode = TypeToNode(entry);
-                    
+
                     // write the concrete type tag
                     if (listType.IsAbstract || listType.IsInterface)
                     {

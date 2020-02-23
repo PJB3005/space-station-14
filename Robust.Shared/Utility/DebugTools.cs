@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using JetBrains.Annotations;
 
@@ -55,7 +56,7 @@ namespace Robust.Shared.Utility
         [Conditional("DEBUG")]
         [AssertionMethod]
         public static void AssertNotNull([AssertionCondition(AssertionConditionType.IS_NOT_NULL)]
-            object arg)
+            object? arg)
         {
             if (arg == null)
             {

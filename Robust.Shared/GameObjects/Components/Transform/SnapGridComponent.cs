@@ -63,7 +63,7 @@ namespace Robust.Shared.GameObjects.Components.Transform
             }
         }
 
-        public override void HandleMessage(ComponentMessage message, INetChannel netChannel = null, IComponent component = null)
+        public override void HandleMessage(ComponentMessage message, INetChannel? netChannel = null, IComponent? component = null)
         {
             base.HandleMessage(message, netChannel, component);
 

@@ -44,8 +44,8 @@ namespace Robust.Shared.Console
             buffer.Write(ClientConGroup.CanViewVar);
             buffer.Write(ClientConGroup.CanAdminPlace);
 
-            buffer.Write(ClientConGroup.Commands.Count);
-            foreach (var command in ClientConGroup.Commands)
+            buffer.Write(ClientConGroup.Commands!.Count);
+            foreach (var command in ClientConGroup.Commands!)
             {
                 buffer.Write(command);
             }

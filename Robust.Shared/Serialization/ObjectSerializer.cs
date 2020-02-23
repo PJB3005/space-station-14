@@ -82,7 +82,7 @@ namespace Robust.Shared.Serialization
             string name,
             TTarget defaultValue,
             Func<TSource, TTarget> ReadConvertFunc,
-            Func<TTarget, TSource> WriteConvertFunc = null,
+            Func<TTarget, TSource>? WriteConvertFunc = null,
             bool alwaysWrite = false
         );
 
@@ -114,7 +114,7 @@ namespace Robust.Shared.Serialization
             string name,
             TTarget defaultValue,
             Func<TSource, TTarget> ReadConvertFunc,
-            Func<TTarget, TSource> WriteConvertFunc = null,
+            Func<TTarget, TSource>? WriteConvertFunc = null,
             bool alwaysWrite = false
         )
         {

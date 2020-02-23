@@ -699,7 +699,7 @@ namespace Robust.Shared.Network
         #region NetMessages
 
         /// <inheritdoc />
-        public void RegisterNetMessage<T>(string name, ProcessMessage<T> rxCallback = null)
+        public void RegisterNetMessage<T>(string name, ProcessMessage<T>? rxCallback = null)
             where T : NetMessage
         {
             _strings.AddString(name);

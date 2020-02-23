@@ -13,22 +13,22 @@ namespace Robust.Shared.Exceptions
         /// <summary>
         /// The name of the type argument that had invalid data.
         /// </summary>
-        public readonly string TypeArgumentName;
+        public readonly string? TypeArgumentName;
 
         public TypeArgumentException()
         {
         }
-        public TypeArgumentException(string message) : base(message)
+        public TypeArgumentException(string? message) : base(message)
         {
         }
-        public TypeArgumentException(string message, Exception inner) : base(message, inner)
+        public TypeArgumentException(string? message, Exception? inner) : base(message, inner)
         {
         }
-        public TypeArgumentException(string message, string name) : base(message)
+        public TypeArgumentException(string? message, string? name) : base(message)
         {
             TypeArgumentName = name;
         }
-        public TypeArgumentException(string message, string name, Exception inner) : base(message, inner)
+        public TypeArgumentException(string? message, string? name, Exception? inner) : base(message, inner)
         {
             TypeArgumentName = name;
         }

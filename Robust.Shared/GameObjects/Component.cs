@@ -187,13 +187,13 @@ namespace Robust.Shared.GameObjects
         /// </summary>
         /// <param name="message">Message to send.</param>
         /// <param name="channel">Network channel to send the message over. If null, broadcast to all channels.</param>
-        protected void SendNetworkMessage(ComponentMessage message, INetChannel channel = null)
+        protected void SendNetworkMessage(ComponentMessage message, INetChannel? channel = null)
         {
             Owner.SendNetworkMessage(this, message, channel);
         }
 
         /// <inheritdoc />
-        public virtual void HandleMessage(ComponentMessage message, INetChannel netChannel = null, IComponent component = null) { }
+        public virtual void HandleMessage(ComponentMessage message, INetChannel? netChannel = null, IComponent? component = null) { }
 
         /// <inheritdoc />
         public virtual ComponentState GetComponentState()

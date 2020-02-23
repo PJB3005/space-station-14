@@ -12,7 +12,7 @@ namespace Robust.Shared.GameStates
     {
         public NetSessionId SessionId { get; set; }
 
-        public string Name { get; set; }
+        public string? Name { get; set; }
         public SessionStatus Status { get; set; }
         public short Ping { get; set; }
 

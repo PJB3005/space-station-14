@@ -57,7 +57,7 @@ namespace Robust.Shared.Physics
     [PublicAPI]
     [DebuggerDisplay("{" + nameof(DebuggerDisplay) + "}")]
     public sealed partial class DynamicTree<T>
-        : DynamicTree, IBroadPhase<T> {
+        : DynamicTree, IBroadPhase<T> where T : notnull {
 
         public delegate Box2 ExtractAabbDelegate(in T value);
 
@@ -78,7 +78,7 @@ namespace Robust.Shared.Physics
 
         private Proxy _root;
 
-        public DynamicTree(ExtractAabbDelegate extractAabbFunc, IEqualityComparer<T> comparer = null, float aabbExtendSize = 1f / 32, int capacity = 256, Func<int, int> growthFunc = null)
+        public DynamicTree(ExtractAabbDelegate extractAabbFunc, IEqualityComparer<T>? comparer = null, float aabbExtendSize = 1f / 32, int capacity = 256, Func<int, int>? growthFunc = null)
             : base(aabbExtendSize, growthFunc)
         {
             _extractAabb = extractAabbFunc;
@@ -1317,7 +1317,7 @@ namespace Robust.Shared.Physics
         [Conditional("DEBUG_DYNAMIC_TREE_ASSERTS")]
         [DebuggerNonUserCode] [DebuggerHidden] [DebuggerStepThrough]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Assert(bool assertion, [CallerMemberName] string member = default, [CallerFilePath] string file = default, [CallerLineNumber] int line = default)
+        public static void Assert(bool assertion, [CallerMemberName] string? member = default, [CallerFilePath] string? file = default, [CallerLineNumber] int line = default)
         {
             if (assertion) return;
 

@@ -108,9 +108,9 @@ namespace Robust.Shared.Map
         /// <param name="ignoreEmpty">Will empty tiles be returned?</param>
         /// <param name="predicate">Optional predicate to filter the files.</param>
         /// <returns></returns>
-        IEnumerable<TileRef> GetTilesIntersecting(Box2 worldArea, bool ignoreEmpty = true, Predicate<TileRef> predicate = null);
+        IEnumerable<TileRef> GetTilesIntersecting(Box2 worldArea, bool ignoreEmpty = true, Predicate<TileRef>? predicate = null);
 
-        IEnumerable<TileRef> GetTilesIntersecting(Circle worldArea, bool ignoreEmpty = true, Predicate<TileRef> predicate = null);
+        IEnumerable<TileRef> GetTilesIntersecting(Circle worldArea, bool ignoreEmpty = true, Predicate<TileRef>? predicate = null);
 
         #endregion TileAccess
 
@@ -129,7 +129,7 @@ namespace Robust.Shared.Map
         void RemoveFromSnapGridCell(GridCoordinates worldPos, SnapGridOffset offset, SnapGridComponent snap);
 
         #endregion SnapGridAccess
-        
+
         #region Transforms
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace Robust.Shared.Map
         /// <param name="posLocal">The local vector with this grid as origin.</param>
         /// <returns>The world-space vector with global origin.</returns>
         Vector2 LocalToWorld(Vector2 posLocal);
-        
+
         /// <summary>
         ///     Transforms World position into grid tile indices.
         /// </summary>

@@ -67,8 +67,13 @@ namespace Robust.Shared.Input
 
         #region Code for easy equality and sorting.
 
-        public int CompareTo(object obj)
+        public int CompareTo(object? obj)
         {
+            if (obj == null)
+            {
+                return 1;
+            }
+
             return CompareTo((BoundKeyFunction) obj);
         }
 
@@ -78,7 +83,7 @@ namespace Robust.Shared.Input
         }
 
         // Could maybe go dirty and optimize these on the assumption that they're singletons.
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return Equals((BoundKeyFunction) obj);
         }

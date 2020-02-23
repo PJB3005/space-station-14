@@ -68,7 +68,7 @@ namespace Robust.Shared.ContentPack
         }
 
         /// <inheritdoc />
-        public void MountContentPack(string pack, ResourcePath prefix = null)
+        public void MountContentPack(string pack, ResourcePath? prefix = null)
         {
             if (prefix == null)
             {
@@ -104,7 +104,7 @@ namespace Robust.Shared.ContentPack
         }
 
         /// <inheritdoc />
-        public void MountContentDirectory(string path, ResourcePath prefix = null)
+        public void MountContentDirectory(string path, ResourcePath? prefix = null)
         {
             if (prefix == null)
             {

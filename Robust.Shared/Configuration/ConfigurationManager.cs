@@ -14,7 +14,7 @@ namespace Robust.Shared.Configuration
     {
         private const char TABLE_DELIMITER = '.';
         private readonly Dictionary<string, ConfigVar> _configVars;
-        private string _configFile;
+        private string? _configFile;
 
         /// <summary>
         ///     Constructs a new ConfigurationManager.
@@ -170,7 +170,7 @@ namespace Robust.Shared.Configuration
             }
         }
 
-        public void RegisterCVar<T>(string name, T defaultValue, CVar flags = CVar.NONE, Action<T> onValueChanged = null)
+        public void RegisterCVar<T>(string name, T defaultValue, CVar flags = CVar.NONE, Action<T>? onValueChanged = null)
         {
             Action<object> valueChangedDelegate = null;
             if (onValueChanged != null)

@@ -246,7 +246,7 @@ namespace Robust.Shared.Physics
         }
 
         /// <inheritdoc />
-        public RayCastResults IntersectRay(MapId mapId, CollisionRay ray, float maxLength = 50, IEntity ignoredEnt = null)
+        public RayCastResults IntersectRay(MapId mapId, CollisionRay ray, float maxLength = 50, IEntity? ignoredEnt = null)
         {
             RayCastResults result = default;
 
