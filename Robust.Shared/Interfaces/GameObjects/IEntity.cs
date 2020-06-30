@@ -156,6 +156,16 @@ namespace Robust.Shared.Interfaces.GameObjects
         /// <returns>True if a component with specified net ID was found.</returns>
         bool TryGetComponent(uint netID, [NotNullWhen(true)] out IComponent? component);
 
+        T? GetComponentOrNull<T>() where T : class
+        {
+            if (TryGetComponent(out T comp))
+            {
+                return comp;
+            }
+
+            return null;
+        }
+
         /// <summary>
         ///     Used by the entity manager to delete the entity.
         ///     Do not call directly. If you want to delete entities,

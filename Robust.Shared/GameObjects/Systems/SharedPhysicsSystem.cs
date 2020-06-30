@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using Robust.Shared.Containers;
 using Robust.Shared.GameObjects.Components;
@@ -98,39 +97,34 @@ namespace Robust.Shared.GameObjects.Systems
         // Runs collision behavior and updates cache
         private void ProcessCollisions()
         {
-            _collisionCache.Clear();
             var collisionsWith = new Dictionary<ICollideBehavior, int>();
-            var physicsComponents = new Dictionary<ICollidableComponent, SharedPhysicsComponent>();
 
-            foreach (var collision in FindCollisions(RelevantEntities, physicsComponents))
-            {
-                _collisionCache.Add(collision);
-            }
+            FindCollisions();
 
             var counter = 0;
 
-            while(GetNextCollision(_collisionCache, counter, out var collision))
+            while (GetNextCollision(_collisionCache, counter, out var collision))
             {
                 counter++;
                 var impulse = _physicsManager.SolveCollisionImpulse(collision);
-                if (physicsComponents.ContainsKey(collision.A))
+                if (collision.APhysics != null)
                 {
-                    physicsComponents[collision.A].Momentum -= impulse;
+                    collision.APhysics.Momentum -= impulse;
                 }
 
-                if (physicsComponents.ContainsKey(collision.B))
+                if (collision.BPhysics != null)
                 {
-                    physicsComponents[collision.B].Momentum += impulse;
+                    collision.BPhysics.Momentum += impulse;
                 }
             }
 
             foreach (var collision in _collisionCache)
             {
                 // Apply onCollide behavior
-                var aBehaviors = ((CollidableComponent)collision.A).Owner.GetAllComponents<ICollideBehavior>();
+                var aBehaviors = collision.A.Owner.GetAllComponents<ICollideBehavior>();
                 foreach (var behavior in aBehaviors)
                 {
-                    var entity = ((CollidableComponent)collision.B).Owner;
+                    var entity = collision.B.Owner;
                     if (entity.Deleted) continue;
                     behavior.CollideWith(entity);
                     if (collisionsWith.ContainsKey(behavior))
@@ -142,10 +136,11 @@ namespace Robust.Shared.GameObjects.Systems
                         collisionsWith[behavior] = 1;
                     }
                 }
-                var bBehaviors = ((CollidableComponent)collision.B).Owner.GetAllComponents<ICollideBehavior>();
+
+                var bBehaviors = collision.B.Owner.GetAllComponents<ICollideBehavior>();
                 foreach (var behavior in bBehaviors)
                 {
-                    var entity = ((CollidableComponent)collision.A).Owner;
+                    var entity = collision.A.Owner;
                     if (entity.Deleted) continue;
                     behavior.CollideWith(entity);
                     if (collisionsWith.ContainsKey(behavior))
@@ -159,60 +154,73 @@ namespace Robust.Shared.GameObjects.Systems
                 }
             }
 
-            foreach (var behavior in collisionsWith.Keys)
+            foreach (var (behavior, amount) in collisionsWith)
             {
-                behavior.PostCollide(collisionsWith[behavior]);
+                behavior.PostCollide(amount);
             }
         }
 
-        private IEnumerable<Manifold> FindCollisions(IEnumerable<IEntity> entities, Dictionary<ICollidableComponent, SharedPhysicsComponent> physicsComponents)
+        private void FindCollisions()
         {
-            var combinations = new List<(EntityUid, EntityUid)>();
-            foreach (var entity in entities)
+            _collisionCache.Clear();
+            var combinations = new HashSet<(EntityUid, EntityUid)>();
+            var collisions = _physicsManager.GetAllCollisions();
+            foreach (var (bodyA, bodyB) in collisions)
             {
-                if (entity.Deleted)
+                var entityA = bodyA.Owner;
+                var entityB = bodyB.Owner;
+                var uidA = entityA.Uid;
+                var uidB = entityB.Uid;
+
+                if (uidA.CompareTo(uidB) > 0)
+                {
+                    // Swap so that we always have one ordering of UIDs to check to make removing dupes easier.
+                    var tmpUid = uidA;
+                    uidA = uidB;
+                    uidB = tmpUid;
+                }
+
+                if (!combinations.Add((uidA, uidB)))
                 {
                     continue;
                 }
 
-                if (entity.GetComponent<SharedPhysicsComponent>().LinearVelocity == Vector2.Zero)
+                if (!PhysicsManager.CollidesOnMask(bodyA, bodyB))
                 {
                     continue;
                 }
 
-                if (!entity.TryGetComponent<CollidableComponent>(out var a)) continue;
-
-                foreach (var collision in FindCollisionsFor(a, combinations, physicsComponents))
+                var aMods = entityA.GetAllComponents<ICollideSpecial>();
+                foreach (var modifier in aMods)
                 {
-                    yield return collision;
+                    if (modifier.PreventCollide(bodyB))
+                    {
+                        goto Next;
+                    }
                 }
-            }
-        }
 
-        private IEnumerable<Manifold> FindCollisionsFor(CollidableComponent a,
-            List<(EntityUid, EntityUid)> combinations,
-            Dictionary<ICollidableComponent, SharedPhysicsComponent> physicsComponents)
-        {
-            foreach (var b in a.GetCollidingEntities(Vector2.Zero).Select(e => e.GetComponent<CollidableComponent>()))
-            {
-                if (combinations.Contains((a.Owner.Uid, b.Owner.Uid)) ||
-                    combinations.Contains((b.Owner.Uid, a.Owner.Uid)))
+                var bMods = entityB.GetAllComponents<ICollideSpecial>();
+                foreach (var modifier in bMods)
+                {
+                    if (modifier.PreventCollide(bodyA))
+                    {
+                        goto Next;
+                    }
+                }
+
+                var physicsA = entityA.GetComponentOrNull<SharedPhysicsComponent>();
+                var physicsB = entityB.GetComponentOrNull<SharedPhysicsComponent>();
+
+                if (physicsA == null && physicsB == null)
                 {
                     continue;
                 }
 
-                combinations.Add((a.Owner.Uid, b.Owner.Uid));
-                var aPhysics = a.Owner.GetComponent<SharedPhysicsComponent>();
-                physicsComponents[a] = aPhysics;
-                if (b.Owner.TryGetComponent<SharedPhysicsComponent>(out var bPhysics))
-                {
-                    physicsComponents[b] = bPhysics;
-                    yield return new Manifold(a, b, aPhysics, bPhysics);
-                }
-                else
-                {
-                    yield return new Manifold(a, b, aPhysics, null);
-                }
+                var collision = new Manifold(bodyA, bodyB, physicsA, physicsB, _physicsManager);
+
+                _collisionCache.Add(collision);
+
+                Next: ;
             }
         }
 
@@ -224,11 +232,13 @@ namespace Robust.Shared.GameObjects.Systems
                 collision = default;
                 return false;
             }
+
             var indexes = new List<int>();
             for (int i = 0; i < collisions.Count; i++)
             {
                 indexes.Add(i);
             }
+
             _random.Shuffle(indexes);
             foreach (var index in indexes)
             {
@@ -264,7 +274,9 @@ namespace Robust.Shared.GameObjects.Systems
         private void UpdatePosition(IEntity entity, float frameTime)
         {
             var physics = entity.GetComponent<SharedPhysicsComponent>();
-            physics.LinearVelocity = new Vector2(Math.Abs(physics.LinearVelocity.X) < Epsilon ? 0.0f : physics.LinearVelocity.X, Math.Abs(physics.LinearVelocity.Y) < Epsilon ? 0.0f : physics.LinearVelocity.Y);
+            physics.LinearVelocity =
+                new Vector2(Math.Abs(physics.LinearVelocity.X) < Epsilon ? 0.0f : physics.LinearVelocity.X,
+                    Math.Abs(physics.LinearVelocity.Y) < Epsilon ? 0.0f : physics.LinearVelocity.Y);
             if (physics.Anchored ||
                 physics.LinearVelocity == Vector2.Zero && Math.Abs(physics.AngularVelocity) < Epsilon) return;
 
@@ -292,9 +304,9 @@ namespace Robust.Shared.GameObjects.Systems
                 {
                     done = false;
                     var correction = collision.Normal * Math.Abs(penetration) * percent;
-                    if (collision.APhysics != null && !((SharedPhysicsComponent)collision.APhysics).Anchored && !collision.APhysics.Deleted)
+                    if (collision.APhysics != null && !collision.APhysics.Anchored && !collision.APhysics.Deleted)
                         collision.APhysics.Owner.Transform.WorldPosition -= correction;
-                    if (collision.BPhysics != null && !((SharedPhysicsComponent)collision.BPhysics).Anchored && !collision.BPhysics.Deleted)
+                    if (collision.BPhysics != null && !collision.BPhysics.Anchored && !collision.BPhysics.Deleted)
                         collision.BPhysics.Owner.Transform.WorldPosition += correction;
                 }
             }
@@ -304,7 +316,8 @@ namespace Robust.Shared.GameObjects.Systems
 
         private float GetFriction(IEntity entity)
         {
-            if (entity.HasComponent<CollidableComponent>() && entity.TryGetComponent(out SharedPhysicsComponent physics) && physics.OnGround)
+            if (entity.HasComponent<ICollidableComponent>() &&
+                entity.TryGetComponent(out SharedPhysicsComponent physics) && physics.OnGround)
             {
                 var location = entity.Transform;
                 var grid = _mapManager.GetGrid(location.GridPosition.GridID);
@@ -312,6 +325,7 @@ namespace Robust.Shared.GameObjects.Systems
                 var tileDef = _tileDefinitionManager[tile.Tile.TypeId];
                 return tileDef.Friction;
             }
+
             return 0.0f;
         }
     }

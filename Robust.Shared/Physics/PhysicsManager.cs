@@ -10,6 +10,7 @@ using Robust.Shared.IoC;
 using Robust.Shared.Log;
 using Robust.Shared.Map;
 using Robust.Shared.Maths;
+using Robust.Shared.Utility;
 
 namespace Robust.Shared.Physics
 {
@@ -18,10 +19,10 @@ namespace Robust.Shared.Physics
     {
         [Dependency] private readonly IMapManager _mapManager = default!;
 
-        private readonly ConcurrentDictionary<MapId,BroadPhase> _treesPerMap =
-            new ConcurrentDictionary<MapId, BroadPhase>();
+        private readonly Dictionary<MapId,BroadPhase> _treesPerMap =
+            new Dictionary<MapId, BroadPhase>();
 
-        private BroadPhase this[MapId mapId] => _treesPerMap.GetOrAdd(mapId, _ => new BroadPhase());
+        private BroadPhase this[MapId mapId] => _treesPerMap.GetOrNew(mapId);
 
         /// <summary>
         ///     returns true if collider intersects a physBody under management.
@@ -50,7 +51,7 @@ namespace Robust.Shared.Physics
             return !_mapManager.GetGrid(gridPosition.GridID).HasGravity || tile.IsEmpty;
         }
 
-        public Vector2 CalculateNormal(ICollidableComponent target, ICollidableComponent source)
+        public Vector2 CalculateNormal(IPhysBody target, IPhysBody source)
         {
             var manifold = target.WorldAABB.Intersect(source.WorldAABB);
             if (manifold.IsEmpty()) return Vector2.Zero;
@@ -70,7 +71,7 @@ namespace Robust.Shared.Physics
             }
         }
 
-        public float CalculatePenetration(ICollidableComponent target, ICollidableComponent source)
+        public float CalculatePenetration(IPhysBody target, IPhysBody source)
         {
             var manifold = target.WorldAABB.Intersect(source.WorldAABB);
             if (manifold.IsEmpty()) return 0.0f;
@@ -78,7 +79,7 @@ namespace Robust.Shared.Physics
         }
 
         // Impulse resolution algorithm based on Box2D's approach in combination with Randy Gaul's Impulse Engine resolution algorithm.
-        public Vector2 SolveCollisionImpulse(Manifold manifold)
+        public Vector2 SolveCollisionImpulse(in Manifold manifold)
         {
             var aP = manifold.APhysics;
             var bP = manifold.BPhysics;
@@ -319,6 +320,11 @@ namespace Robust.Shared.Physics
         public void AddedToMap(IPhysBody body, MapId mapId)
         {
             this[mapId].Add(body);
+        }
+
+        public IEnumerable<(IPhysBody a, IPhysBody B)> GetAllCollisions(bool approx = false)
+        {
+            return _treesPerMap.Values.SelectMany(tree => tree.GetCollisions(approx));
         }
     }
 }

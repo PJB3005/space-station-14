@@ -425,7 +425,7 @@ namespace Robust.Shared.Physics
         {
             var stack = new Stack<Proxy>(256);
 
-            ISet<(Proxy, Proxy)> collisions = new HashSet<(Proxy, Proxy)>(_nodeLookup.Count);
+            var collisions = new HashSet<(Proxy, Proxy)>(_nodeLookup.Count);
 
             foreach (var (_, leaf) in _nodeLookup)
             {
@@ -437,7 +437,7 @@ namespace Robust.Shared.Physics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.NoInlining)]
-        private IEnumerable<(Proxy A,Proxy B)> GetCollisions(Stack<Proxy> stack, ISet<(Proxy,Proxy)> pairs, Proxy leaf, bool approx = false)
+        private IEnumerable<(Proxy A,Proxy B)> GetCollisions(Stack<Proxy> stack, HashSet<(Proxy,Proxy)> pairs, Proxy leaf, bool approx = false)
         {
             stack.Clear();
 
