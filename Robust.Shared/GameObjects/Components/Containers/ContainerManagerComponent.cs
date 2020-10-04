@@ -1,11 +1,10 @@
-﻿using Robust.Shared.GameObjects;
-using Robust.Shared.Interfaces.GameObjects;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Robust.Shared.GameObjects.Components.Containers;
+using JetBrains.Annotations;
+using Robust.Shared.Interfaces.GameObjects;
 using Robust.Shared.Interfaces.GameObjects.Components;
 using Robust.Shared.Interfaces.Reflection;
 using Robust.Shared.Interfaces.Serialization;
@@ -13,16 +12,19 @@ using Robust.Shared.IoC;
 using Robust.Shared.Serialization;
 using Robust.Shared.ViewVariables;
 
-namespace Robust.Server.GameObjects.Components.Container
+namespace Robust.Shared.GameObjects.Components.Containers
 {
-    public sealed class ContainerManagerComponent : SharedContainerManagerComponent
+    public sealed class ContainerManagerComponent : Component, IContainerManager
     {
+        public override string Name => "ContainerContainer";
+        public override uint? NetID => NetIDs.CONTAINER_MANAGER;
+
         [Dependency] private readonly IReflectionManager _reflectionManager = default!;
 
-        private readonly Dictionary<string, IContainer> EntityContainers = new Dictionary<string, IContainer>();
+        private readonly Dictionary<string, IContainer> _entityContainers = new Dictionary<string, IContainer>();
         private Dictionary<string, List<EntityUid>>? _entitiesWaitingResolve;
 
-        [ViewVariables] private IEnumerable<IContainer> _allContainers => EntityContainers.Values;
+        [UsedImplicitly] [ViewVariables] private IEnumerable<IContainer> AllContainers => _entityContainers.Values;
 
         /// <summary>
         /// Shortcut method to make creation of containers easier.
@@ -35,12 +37,12 @@ namespace Robust.Server.GameObjects.Components.Container
         /// <seealso cref="IContainerManager.MakeContainer{T}(string)" />
         public static T Create<T>(string id, IEntity entity) where T : IContainer
         {
-            if (!entity.TryGetComponent<IContainerManager>(out var containermanager))
+            if (!entity.TryGetComponent<IContainerManager>(out var containerManager))
             {
-                containermanager = entity.AddComponent<ContainerManagerComponent>();
+                containerManager = entity.AddComponent<ContainerManagerComponent>();
             }
 
-            return containermanager.MakeContainer<T>(id);
+            return containerManager.MakeContainer<T>(id);
         }
 
         public static T Ensure<T>(string id, IEntity entity) where T : IContainer
@@ -71,7 +73,8 @@ namespace Robust.Server.GameObjects.Components.Container
             return container;
         }
 
-        public override T MakeContainer<T>(string id)
+
+        public T MakeContainer<T>(string id) where T : IContainer
         {
             return (T) MakeContainer(id, typeof(T));
         }
@@ -84,35 +87,39 @@ namespace Robust.Server.GameObjects.Components.Container
             }
 
             var container = (IContainer) Activator.CreateInstance(type, id, this)!;
-            EntityContainers[id] = container;
+            _entityContainers[id] = container;
             Dirty();
             return container;
         }
 
-        public new AllContainersEnumerable GetAllContainers()
+        public bool Remove(IEntity entity)
         {
-            return new AllContainersEnumerable(this);
-        }
+            foreach (var containers in _entityContainers.Values)
+            {
+                if (containers.Contains(entity))
+                {
+                    return containers.Remove(entity);
+                }
+            }
 
-        protected override IEnumerable<IContainer> GetAllContainersImpl()
-        {
-            return GetAllContainers();
-        }
-
-        /// <inheritdoc />
-        public override IContainer GetContainer(string id)
-        {
-            return EntityContainers[id];
+            return true; // If we don't contain the entity, it will always be removed
         }
 
         /// <inheritdoc />
-        public override bool HasContainer(string id)
+        public IContainer GetContainer(string id)
         {
-            return EntityContainers.ContainsKey(id);
+            return _entityContainers[id];
         }
 
         /// <inheritdoc />
-        public override bool TryGetContainer(string id, [NotNullWhen(true)] out IContainer? container)
+        public bool HasContainer(string id)
+        {
+            return _entityContainers.ContainsKey(id);
+        }
+
+
+        /// <inheritdoc />
+        public bool TryGetContainer(string id, [NotNullWhen(true)] out IContainer? container)
         {
             if (!HasContainer(id))
             {
@@ -124,9 +131,9 @@ namespace Robust.Server.GameObjects.Components.Container
             return true;
         }
 
-        public override bool TryGetContainer(IEntity entity, [NotNullWhen(true)] out IContainer? container)
+        public bool TryGetContainer(IEntity entity, [NotNullWhen(true)] out IContainer? container)
         {
-            foreach (var contain in EntityContainers.Values)
+            foreach (var contain in _entityContainers.Values)
             {
                 if (!contain.Deleted && contain.Contains(entity))
                 {
@@ -139,9 +146,9 @@ namespace Robust.Server.GameObjects.Components.Container
             return false;
         }
 
-        public override bool ContainsEntity(IEntity entity)
+        public bool ContainsEntity(IEntity entity)
         {
-            foreach (var container in EntityContainers.Values)
+            foreach (var container in _entityContainers.Values)
             {
                 if (!container.Deleted && container.Contains(entity))
                 {
@@ -152,9 +159,10 @@ namespace Robust.Server.GameObjects.Components.Container
             return false;
         }
 
-        public override void ForceRemove(IEntity entity)
+
+        public void ForceRemove(IEntity entity)
         {
-            foreach (var container in EntityContainers.Values)
+            foreach (var container in _entityContainers.Values)
             {
                 if (container.Contains(entity))
                 {
@@ -163,37 +171,64 @@ namespace Robust.Server.GameObjects.Components.Container
             }
         }
 
-        public override void InternalContainerShutdown(IContainer container)
+        public void InternalContainerShutdown(IContainer container)
         {
-            EntityContainers.Remove(container.ID);
+            _entityContainers.Remove(container.ID);
         }
 
-        /// <inheritdoc />
-        public override bool Remove(IEntity entity)
+        public AllContainersEnumerable GetAllContainers()
         {
-            foreach (var containers in EntityContainers.Values)
+            return new AllContainersEnumerable(this);
+        }
+
+        public override void Initialize()
+        {
+            base.Initialize();
+
+            if (_entitiesWaitingResolve == null)
             {
-                if (containers.Contains(entity))
+                return;
+            }
+
+            foreach (var (key, entities) in _entitiesWaitingResolve)
+            {
+                var container = GetContainer(key);
+                foreach (var uid in entities)
                 {
-                    return containers.Remove(entity);
+                    container.Insert(Owner.EntityManager.GetEntity(uid));
                 }
             }
 
-            return true; // If we don't contain the entity, it will always be removed
+            _entitiesWaitingResolve = null;
+        }
+
+        public override ComponentState GetComponentState()
+        {
+            return new ContainerManagerComponentState(
+                _entityContainers.Values.ToDictionary(
+                    c => c.ID,
+                    container => new ContainerManagerComponentState.ContainerData
+                    {
+                        ContainedEntities = container.ContainedEntities.Select(e => e.Uid).ToArray(),
+                        ShowContents = container.ShowContents,
+                        OccludesLight = container.OccludesLight,
+                        ContainerType = container.GetType().FullName!
+                    }));
         }
 
         public override void OnRemove()
         {
             base.OnRemove();
 
-            // IContianer.Shutdown modifies the EntityContainers collection
-            foreach (var container in EntityContainers.Values.ToArray())
+            // IContainer.Shutdown modifies the EntityContainers collection
+            foreach (var container in _entityContainers.Values.ToArray())
             {
                 container.Shutdown();
             }
 
-            EntityContainers.Clear();
+            _entityContainers.Clear();
         }
+
 
         public override void ExposeData(ObjectSerializer serializer)
         {
@@ -227,7 +262,7 @@ namespace Robust.Server.GameObjects.Components.Container
             else
             {
                 var dict = new Dictionary<string, ContainerPrototypeData>();
-                foreach (var (key, container) in EntityContainers)
+                foreach (var (key, container) in _entityContainers)
                 {
                     var list = new List<EntityUid>(container.ContainedEntities.Select(e => e.Uid));
                     var data = new ContainerPrototypeData(list, container.GetType().FullName!);
@@ -240,43 +275,116 @@ namespace Robust.Server.GameObjects.Components.Container
             }
         }
 
-        public override void Initialize()
+        public override void HandleComponentState(ComponentState? curState, ComponentState? nextState)
         {
-            base.Initialize();
-
-            if (_entitiesWaitingResolve == null)
+            if (!(curState is ContainerManagerComponentState cast))
             {
                 return;
             }
 
-            foreach (var (key, entities) in _entitiesWaitingResolve)
+            // Delete now-gone containers.
+            List<string>? toDelete = null;
+            foreach (var (id, container) in _entityContainers)
             {
-                var container = GetContainer(key);
-                foreach (var uid in entities)
+                if (!cast.Containers.TryGetValue(id, out var dat) || dat.ContainerType != container.GetType().FullName)
                 {
-                    container.Insert(Owner.EntityManager.GetEntity(uid));
+                    container.Shutdown();
+                    toDelete ??= new List<string>();
+                    toDelete.Add(id);
                 }
             }
 
-            _entitiesWaitingResolve = null;
-        }
-
-        public override ComponentState GetComponentState()
-        {
-            return new ContainerManagerComponentState(
-                _allContainers.ToDictionary(
-                    c => c.ID,
-                    DataFor));
-        }
-
-        private static ContainerManagerComponentState.ContainerData DataFor(IContainer container)
-        {
-            return new ContainerManagerComponentState.ContainerData
+            if (toDelete != null)
             {
-                ContainedEntities = container.ContainedEntities.Select(e => e.Uid).ToArray(),
-                ShowContents = container.ShowContents,
-                OccludesLight = container.OccludesLight
-            };
+                foreach (var dead in toDelete)
+                {
+                    _entityContainers.Remove(dead);
+                }
+            }
+
+            // Add new containers and update existing contents.
+            foreach (var (id, data) in cast.Containers)
+            {
+                if (!_entityContainers.TryGetValue(id, out var container))
+                {
+                    container = (IContainer) Activator.CreateInstance(_reflectionManager.GetType(data.ContainerType)!,
+                        id, this)!;
+                    _entityContainers.Add(id, container);
+                }
+
+                // sync show flag
+                container.ShowContents = data.ShowContents;
+                container.OccludesLight = data.OccludesLight;
+
+                // Remove gone entities.
+                List<IEntity>? toRemove = null;
+                // Manual for loop to avoid allocation.
+                // ReSharper disable once ForCanBeConvertedToForeach
+                for (var i = 0; i < container.ContainedEntities.Count; i++)
+                {
+                    var entity = container.ContainedEntities[i];
+                    if (!data.ContainedEntities.Contains(entity.Uid))
+                    {
+                        toRemove ??= new List<IEntity>();
+                        toRemove.Add(entity);
+                    }
+                }
+
+                if (toRemove != null)
+                {
+                    foreach (var goner in toRemove)
+                    {
+                        container.ForceRemove(goner);
+                    }
+                }
+
+                // Add new entities.
+                foreach (var uid in data.ContainedEntities)
+                {
+                    var entity = Owner.EntityManager.GetEntity(uid);
+
+                    if (!container.Contains(entity))
+                    {
+                        container.Insert(entity);
+                    }
+                }
+            }
+        }
+
+        protected override void Shutdown()
+        {
+            base.Shutdown();
+
+            /*// On shutdown we won't get to process remove events in the containers so this has to be manually done.
+            foreach (var container in _containers.Values)
+            {
+                foreach (var containerEntity in container.Entities)
+                {
+                    Owner.EntityManager.EventBus.RaiseEvent(EventSource.Local,
+                        new UpdateContainerOcclusionMessage(containerEntity));
+                }
+            }*/
+        }
+
+        [Serializable, NetSerializable]
+        private class ContainerManagerComponentState : ComponentState
+        {
+            public Dictionary<string, ContainerData> Containers { get; }
+
+            public ContainerManagerComponentState(Dictionary<string, ContainerData> containers) : base(
+                NetIDs.CONTAINER_MANAGER)
+            {
+                Containers = containers;
+            }
+
+            [Serializable, NetSerializable]
+            public struct ContainerData
+            {
+                public bool ShowContents;
+                public bool OccludesLight;
+                public EntityUid[] ContainedEntities;
+                public string ContainerType;
+            }
         }
 
         private struct ContainerPrototypeData : IExposeData
@@ -328,7 +436,7 @@ namespace Robust.Server.GameObjects.Components.Container
 
             public AllContainersEnumerator(ContainerManagerComponent manager)
             {
-                _enumerator = manager.EntityContainers.Values.GetEnumerator();
+                _enumerator = manager._entityContainers.Values.GetEnumerator();
                 Current = default;
             }
 
@@ -349,11 +457,11 @@ namespace Robust.Server.GameObjects.Components.Container
             void IEnumerator.Reset()
             {
                 ((IEnumerator<IContainer>) _enumerator).Reset();
-            }
+            }    
 
             [AllowNull] public IContainer Current { get; private set; }
 
-            object? IEnumerator.Current => Current;
+            object IEnumerator.Current => Current;
 
             public void Dispose()
             {

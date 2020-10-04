@@ -1,10 +1,10 @@
 ﻿using Robust.Client.GameObjects.Components;
 using Robust.Client.GameObjects.Components.Animations;
-using Robust.Client.GameObjects.Components.Containers;
 using Robust.Client.GameObjects.Components.UserInterface;
 using Robust.Client.Interfaces.GameObjects.Components;
 using Robust.Shared.GameObjects;
 using Robust.Shared.GameObjects.Components;
+using Robust.Shared.GameObjects.Components.Containers;
 using Robust.Shared.GameObjects.Components.Map;
 using Robust.Shared.GameObjects.Components.Transform;
 using Robust.Shared.GameObjects.Components.UserInterface;

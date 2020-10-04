@@ -1,9 +1,10 @@
-﻿using Robust.Shared.GameObjects.EntitySystemMessages;
-using Robust.Shared.GameObjects.Systems;
+﻿using JetBrains.Annotations;
+using Robust.Shared.GameObjects.EntitySystemMessages;
 using Robust.Shared.Interfaces.GameObjects.Components;
 
-namespace Robust.Server.GameObjects.EntitySystems
+namespace Robust.Shared.GameObjects.Systems
 {
+    [UsedImplicitly]
     internal sealed class ContainerSystem : EntitySystem
     {
         public override void Initialize()

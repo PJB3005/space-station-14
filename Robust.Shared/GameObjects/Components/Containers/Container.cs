@@ -1,16 +1,14 @@
 ﻿using System.Collections.Generic;
 using JetBrains.Annotations;
-using Robust.Server.GameObjects.EntitySystemMessages;
-using Robust.Shared.Interfaces.GameObjects;
 using Robust.Shared.Containers;
-using Robust.Shared.GameObjects;
+using Robust.Shared.GameObjects.EntitySystemMessages;
+using Robust.Shared.Interfaces.GameObjects;
 using Robust.Shared.Interfaces.GameObjects.Components;
 using Robust.Shared.Maths;
-using Robust.Shared.Serialization;
 using Robust.Shared.Utility;
 using Robust.Shared.ViewVariables;
 
-namespace Robust.Server.GameObjects.Components.Container
+namespace Robust.Shared.GameObjects.Components.Containers
 {
     /// <summary>
     /// Default implementation for containers,
@@ -119,14 +117,16 @@ namespace Robust.Server.GameObjects.Components.Container
 
             var transform = toinsert.Transform;
 
-            if (transform.Parent == null) // Only true if Parent is the map entity
-                return false;
-
-            if(ContainerHelpers.TryGetContainerMan(transform.Parent.Owner, out var containerManager) && !containerManager.Remove(toinsert))
+            // Can be null due to ordering of component state application in the netcode.
+            if (transform.Parent != null)
             {
-                // Can't remove from existing container, can't insert.
-                return false;
+                if (ContainerHelpers.TryGetContainerMan(transform.Parent.Owner, out var containerManager) && !containerManager.Remove(toinsert))
+                {
+                    // Can't remove from existing container, can't insert.
+                    return false;
+                }
             }
+
             InternalInsert(toinsert);
             transform.AttachParent(Owner.Transform);
 

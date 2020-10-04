@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Robust.Shared.Containers;
+using Robust.Shared.GameObjects.EntitySystemMessages;
 using Robust.Shared.GameObjects.Systems;
 using Robust.Shared.Interfaces.GameObjects;
 
@@ -13,12 +14,13 @@ namespace Robust.Client.GameObjects.EntitySystems
         {
             base.Initialize();
 
-            SubscribeLocalEvent<UpdateContainerOcclusionMessage>(UpdateContainerOcclusion);
+            SubscribeLocalEvent<EntInsertedIntoContainerMessage>(UpdateContainerOcclusion);
+            SubscribeLocalEvent<EntRemovedFromContainerMessage>(UpdateContainerOcclusion);
 
             UpdatesBefore.Add(typeof(SpriteSystem));
         }
 
-        private void UpdateContainerOcclusion(UpdateContainerOcclusionMessage ev)
+        private void UpdateContainerOcclusion(ContainerModifiedMessage ev)
         {
             _updateQueue.Add(ev.Entity);
         }
@@ -91,15 +93,5 @@ namespace Robust.Client.GameObjects.EntitySystems
                 }
             }
         }
-    }
-
-    internal readonly struct UpdateContainerOcclusionMessage
-    {
-        public UpdateContainerOcclusionMessage(IEntity entity)
-        {
-            Entity = entity;
-        }
-
-        public IEntity Entity { get; }
     }
 }
