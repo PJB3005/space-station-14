@@ -84,25 +84,6 @@ namespace Robust.UnitTesting.Shared.Prototypes
         }
 
         [Test]
-        public void TestPlacementProperties()
-        {
-            var prototype = manager.Index<EntityPrototype>("mounttester");
-
-            Assert.That(prototype.MountingPoints, Is.EquivalentTo(new int[] { 1, 2, 3 }));
-            Assert.That(prototype.PlacementMode, Is.EqualTo("AlignWall"));
-            Assert.That(prototype.PlacementRange, Is.EqualTo(300));
-            Assert.That(prototype.PlacementOffset, Is.EqualTo(new Vector2i(30, 45)));
-        }
-
-        [Test]
-        public void TestPlacementInheritance()
-        {
-            var prototype = manager.Index<EntityPrototype>("PlaceInheritTester");
-
-            Assert.That(prototype.PlacementMode, Is.EqualTo("SnapgridCenter"));
-        }
-
-        [Test]
         public void TestLoadString()
         {
             manager.LoadString(LoadStringDocument);

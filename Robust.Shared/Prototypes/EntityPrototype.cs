@@ -100,32 +100,6 @@ namespace Robust.Shared.Prototypes
         [DataField("abstract")]
         public bool Abstract { get; private set; }
 
-        [DataField("placement")] private EntityPlacementProperties PlacementProperties = new();
-
-        /// <summary>
-        /// The different mounting points on walls. (If any).
-        /// </summary>
-        [ViewVariables]
-        public List<int>? MountingPoints => PlacementProperties.MountingPoints;
-
-        /// <summary>
-        /// The Placement mode used for client-initiated placement. This is used for admin and editor placement. The serverside version controls what type the server assigns in normal gameplay.
-        /// </summary>
-        [ViewVariables]
-        public string PlacementMode => PlacementProperties.PlacementMode;
-
-        /// <summary>
-        /// The Range this entity can be placed from. This is only used serverside since the server handles normal gameplay. The client uses unlimited range since it handles things like admin spawning and editing.
-        /// </summary>
-        [ViewVariables]
-        public int PlacementRange => PlacementProperties.PlacementRange;
-
-        /// <summary>
-        /// Offset that is added to the position when placing. (if any). Client only.
-        /// </summary>
-        [ViewVariables]
-        public Vector2i PlacementOffset => PlacementProperties.PlacementOffset;
-
         /// <summary>
         /// True if this entity will be saved by the map loader.
         /// </summary>
@@ -299,52 +273,6 @@ namespace Robust.Shared.Prototypes
             }
         }
 
-        [DataDefinition]
-        public class EntityPlacementProperties
-        {
-            public bool PlacementOverriden { get; private set; }
-            public bool SnapOverriden { get; private set; }
-            private string _placementMode = "PlaceFree";
-            private Vector2i _placementOffset;
-
-            [DataField("mode")]
-            public string PlacementMode
-            {
-                get => _placementMode;
-                set
-                {
-                    PlacementOverriden = true;
-                    _placementMode = value;
-                }
-            }
-
-            [DataField("offset")]
-            public Vector2i PlacementOffset
-            {
-                get => _placementOffset;
-                set
-                {
-                    PlacementOverriden = true;
-                    _placementOffset = value;
-                }
-            }
-
-            [DataField("nodes")] public List<int>? MountingPoints;
-
-            [DataField("range")] public int PlacementRange = DEFAULT_RANGE;
-            private HashSet<string> _snapFlags = new();
-
-            [DataField("snap")]
-            public HashSet<string> SnapFlags
-            {
-                get => _snapFlags;
-                set
-                {
-                    SnapOverriden = true;
-                    _snapFlags = value;
-                }
-            }
-        }
         /*private class PrototypeSerializationContext : YamlObjectSerializer.Context
         {
             readonly EntityPrototype? prototype;
