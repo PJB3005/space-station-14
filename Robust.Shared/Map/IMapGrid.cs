@@ -47,6 +47,11 @@ namespace Robust.Shared.Map
         /// </summary>
         Vector2 WorldPosition { get; set; }
 
+        /// <summary>
+        ///     The rotation of the grid in world terms.
+        /// </summary>
+        Angle WorldRotation { get; set; }
+
         Matrix3 WorldMatrix { get; }
 
         Matrix3 InvWorldMatrix { get; }
@@ -88,6 +93,12 @@ namespace Robust.Shared.Map
         void SetTile(Vector2i gridIndices, Tile tile);
 
         /// <summary>
+        ///     Modifies many tiles inside of a chunk. Avoids regenerating collision until the end.
+        /// </summary>
+        /// <param name="tiles"></param>
+        void SetTiles(List<(Vector2i GridIndices, Tile Tile)> tiles);
+
+        /// <summary>
         ///     Returns all tiles inside the area that match the predicate.
         /// </summary>
         /// <param name="worldArea">An area in the world to search for tiles.</param>
@@ -104,6 +115,7 @@ namespace Robust.Shared.Map
 
         IEnumerable<EntityUid> GetAnchoredEntities(EntityCoordinates coords);
         IEnumerable<EntityUid> GetAnchoredEntities(Vector2i pos);
+        IEnumerable<EntityUid> GetAnchoredEntities(Box2 worldAABB);
 
         Vector2i TileIndicesFor(EntityCoordinates coords) => CoordinatesToTile(coords);
         Vector2i TileIndicesFor(MapCoordinates worldPos) => CoordinatesToTile(MapToGrid(worldPos));
@@ -196,6 +208,11 @@ namespace Robust.Shared.Map
         /// <param name="tile"></param>
         /// <returns></returns>
         bool TryGetTileRef(EntityCoordinates coords, out TileRef tile);
+
+        /// <summary>
+        ///     Transforms a world position into a tile reference, returns false if no tile is found.
+        /// </summary>
+        bool TryGetTileRef(Vector2 worldPos, out TileRef tile);
 
         /// <summary>
         /// Transforms grid tile indices to chunk indices.

@@ -26,6 +26,7 @@ namespace Robust.UnitTesting.Shared.Prototypes
 
             IoCManager.Resolve<ISerializationManager>().Initialize();
             manager = IoCManager.Resolve<IPrototypeManager>();
+            manager.RegisterType(typeof(EntityPrototype));
             manager.LoadString(DOCUMENT);
             manager.Resync();
         }
@@ -87,6 +88,7 @@ namespace Robust.UnitTesting.Shared.Prototypes
         public void TestLoadString()
         {
             manager.LoadString(LoadStringDocument);
+            manager.Resync();
 
             var prototype = manager.Index<EntityPrototype>(LoadStringTestDummyId);
 
