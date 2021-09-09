@@ -8,7 +8,7 @@ using Robust.Client.Graphics;
 using Robust.Client.Graphics.Clyde;
 using Robust.Client.Input;
 using Robust.Client.Map;
-using Robust.Client.Placement;
+using Robust.Client.Mapping;
 using Robust.Client.Player;
 using Robust.Client.Prototypes;
 using Robust.Client.Reflection;
@@ -105,13 +105,14 @@ namespace Robust.Client
             IoCManager.Register<IFontManager, FontManager>();
             IoCManager.Register<IFontManagerInternal, FontManager>();
             IoCManager.Register<IEyeManager, EyeManager>();
-            IoCManager.Register<IPlacementManager, PlacementManager>();
             IoCManager.Register<IOverlayManager, OverlayManager>();
             IoCManager.Register<IOverlayManagerInternal, OverlayManager>();
             IoCManager.Register<IViewVariablesManager, ViewVariablesManager>();
             IoCManager.Register<IViewVariablesManagerInternal, ViewVariablesManager>();
             IoCManager.Register<IClientConGroupController, ClientConGroupController>();
             IoCManager.Register<IScriptClient, ScriptClient>();
+            IoCManager.Register<IPlacementManager, PlacementManager>();
+            IoCManager.Register<IPlacementManagerInternal, PlacementManager>();
         }
     }
 }

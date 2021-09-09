@@ -1,0 +1,13 @@
+﻿<SS14Window xmlns="https://spacestation14.io"
+            Title="{Loc 'tile-spawn-window-title'}"
+            MinSize="300 300">
+    <BoxContainer Orientation="Vertical">
+        <!-- Top search bar -->
+        <BoxContainer Orientation="Horizontal">
+            <LineEdit Name="SearchBar" HorizontalExpand="True"
+                      PlaceHolder="{Loc 'tile-spawn-window-search-bar-placeholder'}" />
+            <Button Name="ClearButton" Disabled="True" Text="{Loc 'tile-spawn-window-clear-button'}" />
+        </BoxContainer>
+        <ItemList Name="TileList" VerticalExpand="True" />
+    </BoxContainer>
+</SS14Window>

@@ -11,7 +11,6 @@ using Robust.Server.Debugging;
 using Robust.Server.GameObjects;
 using Robust.Server.GameStates;
 using Robust.Server.Log;
-using Robust.Server.Placement;
 using Robust.Server.Player;
 using Robust.Server.Scripting;
 using Robust.Server.ServerStatus;
@@ -322,7 +321,6 @@ namespace Robust.Server
 
             IoCManager.Resolve<INetConfigurationManager>().SetupNetworking();
             IoCManager.Resolve<IPlayerManager>().Initialize(MaxPlayers);
-            IoCManager.Resolve<IPlacementManager>().Initialize();
             IoCManager.Resolve<IViewVariablesHost>().Initialize();
 
             // Call Init in game assemblies.

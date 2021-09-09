@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Runtime;
@@ -10,8 +9,7 @@ using Robust.Client.GameObjects;
 using Robust.Client.GameStates;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
-using Robust.Client.Placement;
-using Robust.Client.Player;
+using Robust.Client.Mapping;
 using Robust.Client.ResourceManagement;
 using Robust.Client.State;
 using Robust.Client.UserInterface;
@@ -51,7 +49,6 @@ namespace Robust.Client
         [Dependency] private readonly ITimerManager _timerManager = default!;
         [Dependency] private readonly IClientEntityManager _entityManager = default!;
         [Dependency] private readonly IEntityLookup _lookup = default!;
-        [Dependency] private readonly IPlacementManager _placementManager = default!;
         [Dependency] private readonly IClientGameStateManager _gameStateManager = default!;
         [Dependency] private readonly IOverlayManagerInternal _overlayManager = default!;
         [Dependency] private readonly ILogManager _logManager = default!;
@@ -66,6 +63,7 @@ namespace Robust.Client
         [Dependency] private readonly IAuthManager _authManager = default!;
         [Dependency] private readonly IMidiManager _midiManager = default!;
         [Dependency] private readonly IEyeManager _eyeManager = default!;
+        [Dependency] private readonly IPlacementManagerInternal _placementManager = default!;
 
         private CommandLineArgs? _commandLineArgs;
 
@@ -125,9 +123,9 @@ namespace Robust.Client
             _mapManager.Initialize();
             _entityManager.Initialize();
             _gameStateManager.Initialize();
-            _placementManager.Initialize();
             _viewVariablesManager.Initialize();
             _scriptClient.Initialize();
+            _placementManager.Initialize();
 
             _client.Initialize();
             _discord.Initialize();
@@ -399,10 +397,7 @@ namespace Robust.Client
             _stateManager.FrameUpdate(frameEventArgs);
 
             if (_client.RunLevel >= ClientRunLevel.Connected)
-            {
-                _placementManager.FrameUpdate(frameEventArgs);
                 _entityManager.FrameUpdate(frameEventArgs.DeltaSeconds);
-            }
 
             _overlayManager.FrameUpdate(frameEventArgs);
             _userInterfaceManager.FrameUpdate(frameEventArgs);

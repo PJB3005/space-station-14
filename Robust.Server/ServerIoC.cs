@@ -5,7 +5,6 @@ using Robust.Server.GameObjects;
 using Robust.Server.GameStates;
 using Robust.Server.Map;
 using Robust.Server.Maps;
-using Robust.Server.Placement;
 using Robust.Server.Player;
 using Robust.Server.Prototypes;
 using Robust.Server.Reflection;
@@ -53,7 +52,6 @@ namespace Robust.Server
             IoCManager.Register<IEntityNetworkManager, ServerEntityManager>();
             IoCManager.Register<IServerEntityNetworkManager, ServerEntityManager>();
             IoCManager.Register<IMapLoader, MapLoader>();
-            IoCManager.Register<IPlacementManager, PlacementManager>();
             IoCManager.Register<IPlayerManager, PlayerManager>();
             IoCManager.Register<ISharedPlayerManager, PlayerManager>();
             IoCManager.Register<IPrototypeManager, ServerPrototypeManager>();

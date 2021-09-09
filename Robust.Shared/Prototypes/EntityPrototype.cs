@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Robust.Shared.GameObjects;
@@ -99,6 +99,14 @@ namespace Robust.Shared.Prototypes
         [NeverPushInheritance]
         [DataField("abstract")]
         public bool Abstract { get; private set; }
+
+        [DataField("placement")] private EntityPlacementProperties _placementProperties = new();
+
+        /// <summary>
+        /// The Placement mode used for client-initiated placement. This is used for admin and editor placement. The serverside version controls what type the server assigns in normal gameplay.
+        /// </summary>
+        [ViewVariables]
+        public string? PlacementMode => _placementProperties.PlacementMode;
 
         /// <summary>
         /// True if this entity will be saved by the map loader.
@@ -276,6 +284,13 @@ namespace Robust.Shared.Prototypes
             public ComponentRegistry(Dictionary<string, IComponent> components) : base(components)
             {
             }
+        }
+
+        [DataDefinition]
+        public class EntityPlacementProperties
+        {
+            [DataField("mode")]
+            public string? PlacementMode { get; set; }
         }
 
         /*private class PrototypeSerializationContext : YamlObjectSerializer.Context

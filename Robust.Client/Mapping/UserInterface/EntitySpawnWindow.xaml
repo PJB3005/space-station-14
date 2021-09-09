@@ -1,0 +1,22 @@
+﻿<SS14Window xmlns="https://spacestation14.io"
+            Title="{Loc 'entity-spawn-window-title'}"
+            MinSize="250 300">
+    <BoxContainer Orientation="Vertical">
+        <!-- Top search bar -->
+        <BoxContainer Orientation="Horizontal">
+            <LineEdit Name="SearchBar" HorizontalExpand="True"
+                      PlaceHolder="{Loc 'entity-spawn-window-search-bar-placeholder'}" />
+            <Button Name="ClearButton" Disabled="True" Text="{Loc 'entity-spawn-window-clear-button'}" />
+        </BoxContainer>
+
+        <ScrollContainer Name="ScrollContainer" VerticalExpand="True" MinWidth="200">
+            <!-- Gets filled with PrototypeListContainer by constructor. -->
+        </ScrollContainer>
+
+        <BoxContainer Orientation="Horizontal">
+            <Button Name="EraseButton" ToggleMode="True" Text="{Loc 'entity-spawn-window-erase-button-text'}" />
+            <OptionButton Name="OverrideMenu" HorizontalExpand="True"
+                          ToolTip="{Loc 'entity-spawn-window-override-menu-tooltip'}" />
+        </BoxContainer>
+    </BoxContainer>
+</SS14Window>
