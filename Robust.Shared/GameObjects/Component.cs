@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Robust.Shared.GameStates;
 using Robust.Shared.Network;
 using Robust.Shared.Players;
@@ -27,6 +27,10 @@ namespace Robust.Shared.GameObjects
         /// <inheritdoc />
         [ViewVariables]
         public IEntity Owner { get; set; } = default!;
+
+        /// <inheritdoc />
+        [ViewVariables]
+        public EntityUid OwnerUid => Owner.Uid;
 
         /// <inheritdoc />
         [ViewVariables]
@@ -164,7 +168,7 @@ namespace Robust.Shared.GameObjects
 
         private IEventBus GetBus()
         {
-            // Apparently components are being created outside of the ComponentManager,
+            // Apparently components are being created outside of the EntityManager,
             // and the Owner is not being set correctly.
             // ReSharper disable once RedundantAssertionStatement
             DebugTools.AssertNotNull(Owner);
@@ -229,11 +233,12 @@ namespace Robust.Shared.GameObjects
         {
             // Deserialization will cause this to be true.
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if(Owner is null)
+            if(Owner is null || LifeStage >= ComponentLifeStage.Removing)
                 return;
 
-            Owner.Dirty();
-            LastModifiedTick = Owner.EntityManager.CurrentTick;
+            var entManager = Owner.EntityManager;
+            entManager.DirtyEntity(OwnerUid);
+            LastModifiedTick = entManager.CurrentTick;
         }
 
         /// <summary>

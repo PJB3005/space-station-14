@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using Robust.Shared.Maths;
 using Robust.Shared.Timing;
 
@@ -9,8 +10,6 @@ namespace Robust.Shared.Map
         GameTick LastTileModifiedTick { get; }
 
         GameTick CurTick { get; }
-
-        Box2 LocalBounds { get; }
 
         /// <summary>
         ///     The total number of chunks contained on this grid.
@@ -27,12 +26,7 @@ namespace Robust.Shared.Map
         /// <param name="pos">Position of the entity in local tile indices.</param>
         void AnchoredEntDirty(Vector2i pos);
 
-        /// <summary>
-        ///     Regenerates anything that is based on chunk collision data.
-        ///     This wouldn't even be separate if not for the whole "ability to suppress automatic collision regeneration" thing.
-        ///     As it is, YamlGridSerializer performs manual collision regeneration and that wasn't properly getting propagated to the grid. Thus, this needs to exist.
-        /// </summary>
-        void NotifyChunkCollisionRegenerated(MapChunk chunk);
+        void UpdateAABB();
 
         /// <summary>
         ///     Returns the chunk at the given indices. If the chunk does not exist,
@@ -70,6 +64,8 @@ namespace Robust.Shared.Map
         /// <summary>
         ///     Returns all the <see cref="IMapChunkInternal"/> intersecting the worldAABB.
         /// </summary>
-        IEnumerable<IMapChunkInternal> GetMapChunks(Box2 worldAABB);
+        void GetMapChunks(Box2 worldAABB, out MapGrid.ChunkEnumerator enumerator);
+
+        void GetMapChunks(Box2Rotated worldArea, out MapGrid.ChunkEnumerator enumerator);
     }
 }

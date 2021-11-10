@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Robust.Shared.Audio;
 using Robust.Shared.Configuration;
 using Robust.Shared.Log;
 using Robust.Shared.Network;
@@ -82,6 +83,12 @@ namespace Robust.Shared
         public static readonly CVarDef<bool> NetPVS =
             CVarDef.Create("net.pvs", true, CVar.ARCHIVE | CVar.REPLICATED | CVar.SERVER);
 
+        public static readonly CVarDef<float> StreamedTilesPerSecond =
+            CVarDef.Create("net.stream_tps", 500f, CVar.ARCHIVE | CVar.SERVER);
+
+        public static readonly CVarDef<float> StreamedTileRange =
+            CVarDef.Create("net.stream_range", 15f, CVar.ARCHIVE | CVar.SERVER);
+
         public static readonly CVarDef<float> NetMaxUpdateRange =
             CVarDef.Create("net.maxupdaterange", 12.5f, CVar.ARCHIVE | CVar.REPLICATED | CVar.SERVER);
 
@@ -90,6 +97,21 @@ namespace Robust.Shared
 
         public static readonly CVarDef<int> NetTickrate =
             CVarDef.Create("net.tickrate", 60, CVar.ARCHIVE | CVar.REPLICATED | CVar.SERVER);
+
+        public static readonly CVarDef<float> ConnectionTimeout =
+            CVarDef.Create("net.connection_timeout", 25.0f, CVar.ARCHIVE | CVar.CLIENTONLY);
+
+        public static readonly CVarDef<float> ResendHandshakeInterval =
+            CVarDef.Create("net.handshake_interval", 3.0f, CVar.ARCHIVE | CVar.CLIENTONLY);
+
+        public static readonly CVarDef<int> MaximumHandshakeAttempts =
+            CVarDef.Create("net.handshake_attempts", 5, CVar.ARCHIVE | CVar.CLIENTONLY);
+
+        /// <summary>
+        /// If true, encrypt connections when possible.
+        /// </summary>
+        public static readonly CVarDef<bool> NetEncrypt =
+            CVarDef.Create("net.encrypt", true, CVar.CLIENTONLY);
 
         /**
          * SUS
@@ -301,6 +323,12 @@ namespace Robust.Shared
         public static readonly CVarDef<bool> DisplaySoftShadows =
             CVarDef.Create("display.softshadows", true, CVar.CLIENTONLY | CVar.ARCHIVE);
 
+        public static readonly CVarDef<bool> DisplayBlurLight =
+            CVarDef.Create("display.blur_light", true, CVar.CLIENTONLY | CVar.ARCHIVE);
+
+        public static readonly CVarDef<float> DisplayBlurLightFactor =
+            CVarDef.Create("display.blur_light_factor", 0.001f, CVar.CLIENTONLY | CVar.ARCHIVE);
+
         public static readonly CVarDef<float> DisplayUIScale =
             CVarDef.Create("display.uiScale", 0f, CVar.ARCHIVE | CVar.CLIENTONLY);
 
@@ -417,9 +445,18 @@ namespace Robust.Shared
         public static readonly CVarDef<string> DisplaySplashLogo =
             CVarDef.Create("display.splash_logo", "", CVar.CLIENTONLY);
 
+        /// <summary>
+        /// Use US QWERTY hotkeys.
+        /// </summary>
+        public static readonly CVarDef<bool> DisplayUSQWERTYHotkeys =
+            CVarDef.Create("display.use_US_QWERTY_hotkeys", false, CVar.CLIENTONLY | CVar.ARCHIVE);
+
         /*
          * AUDIO
          */
+
+        public static readonly CVarDef<int> AudioAttenuation =
+            CVarDef.Create("audio.attenuation", (int) Attenuation.Default, CVar.REPLICATED | CVar.ARCHIVE);
 
         public static readonly CVarDef<string> AudioDevice =
             CVarDef.Create("audio.device", string.Empty, CVar.CLIENTONLY);
@@ -438,6 +475,13 @@ namespace Robust.Shared
          * PHYSICS
          */
 
+        // Grid fixtures
+        /// <summary>
+        /// I'ma be real with you: the only reason this exists is to get tests working.
+        /// </summary>
+        public static readonly CVarDef<bool> GenerateGridFixtures =
+            CVarDef.Create("physics.grid_fixtures", true, CVar.REPLICATED);
+
         // - Contacts
         public static readonly CVarDef<int> ContactMultithreadThreshold =
             CVarDef.Create("physics.contact_multithread_threshold", 32);
@@ -447,10 +491,10 @@ namespace Robust.Shared
 
         // - Sleep
         public static readonly CVarDef<float> AngularSleepTolerance =
-            CVarDef.Create("physics.angsleeptol", 2.0f / 180.0f * MathF.PI);
+            CVarDef.Create("physics.angsleeptol", 0.25f / 180.0f * MathF.PI);
 
         public static readonly CVarDef<float> LinearSleepTolerance =
-            CVarDef.Create("physics.linsleeptol", 0.001f);
+            CVarDef.Create("physics.linsleeptol", 0.1f);
 
         public static readonly CVarDef<bool> SleepAllowed =
             CVarDef.Create("physics.sleepallowed", true);

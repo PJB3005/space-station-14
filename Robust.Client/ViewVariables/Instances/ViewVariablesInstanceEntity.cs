@@ -116,7 +116,7 @@ namespace Robust.Client.ViewVariables.Instances
                     };
                     top.HorizontalExpand = true;
                     hBox.AddChild(top);
-                    hBox.AddChild(new SpriteView {Sprite = sprite});
+                    hBox.AddChild(new SpriteView {Sprite = sprite, OverrideDirection = Direction.South});
                     vBoxContainer.AddChild(hBox);
                 }
                 else
@@ -429,7 +429,7 @@ namespace Robust.Client.ViewVariables.Instances
             {
                 var comp = (Component) componentFactory.GetComponent(registration.Type);
                 comp.Owner = _entity;
-                _entityManager.ComponentManager.AddComponent(_entity, comp);
+                _entityManager.AddComponent(_entity, comp);
             }
             catch (Exception e)
             {
@@ -446,7 +446,7 @@ namespace Robust.Client.ViewVariables.Instances
         {
             try
             {
-                _entityManager.ComponentManager.RemoveComponent(_entity.Uid, component);
+                _entityManager.RemoveComponent(_entity.Uid, component);
             }
             catch (Exception e)
             {

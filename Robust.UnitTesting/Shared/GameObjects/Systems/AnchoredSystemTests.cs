@@ -50,12 +50,11 @@ namespace Robust.UnitTesting.Shared.GameObjects.Systems
 
         // An entity is anchored to the tile it is over on the target grid.
         // An entity is anchored by setting the flag on the transform.
-        // An anchored entity is defined as an entity with the ITransformComponent.Anchored flag set.
+        // An anchored entity is defined as an entity with the TransformComponent.Anchored flag set.
         // The Anchored field is used for serialization of anchored state.
 
         // TODO: The grid SnapGrid functions are internal, expose the query functions to content.
         // PhysicsComponent.BodyType is not able to be changed by content.
-        // SnapGridComponent is obsolete.
 
         /// <summary>
         /// When an entity is anchored to a grid tile, it's world position is centered on the tile.
@@ -319,7 +318,7 @@ namespace Robust.UnitTesting.Shared.GameObjects.Systems
         }
 
         /// <summary>
-        /// Adding a physics component should poll ITransformComponent.Anchored for the correct body type.
+        /// Adding a physics component should poll TransformComponent.Anchored for the correct body type.
         /// </summary>
         [Test]
         public void Anchored_AddPhysComp_IsStaticBody()

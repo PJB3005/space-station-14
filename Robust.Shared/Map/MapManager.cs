@@ -16,10 +16,7 @@ namespace Robust.Shared.Map
     internal class MapManager : IMapManagerInternal
     {
         [Dependency] private readonly IGameTiming _gameTiming = default!;
-        [Dependency] protected readonly IComponentManager ComponentManager = default!;
         [Dependency] private readonly IEntityManager _entityManager = default!;
-
-        private SharedGridFixtureSystem _gridFixtures = default!;
 
         public IGameTiming GameTiming => _gameTiming;
 
@@ -85,8 +82,6 @@ namespace Robust.Shared.Map
 
             Logger.DebugS("map", "Starting...");
 
-            _gridFixtures = EntitySystem.Get<SharedGridFixtureSystem>();
-
             if (!_maps.Contains(MapId.Nullspace))
             {
                 CreateMap(MapId.Nullspace);
@@ -113,7 +108,7 @@ namespace Robust.Shared.Map
                 if (GridExists(gridIndex))
                 {
                     Logger.DebugS("map",
-                        $"Entity {comp.Owner.Uid} removed grid component, removing bound grid {gridIndex}");
+                        $"Entity {comp.OwnerUid} removed grid component, removing bound grid {gridIndex}");
                     DeleteGrid(gridIndex);
                 }
             }
@@ -258,7 +253,7 @@ namespace Robust.Shared.Map
 
             if (actualID != MapId.Nullspace) // nullspace isn't bound to an entity
             {
-                var mapComps = _entityManager.ComponentManager.EntityQuery<IMapComponent>(true);
+                var mapComps = _entityManager.EntityQuery<IMapComponent>(true);
 
                 IMapComponent? result = null;
                 foreach (var mapComp in mapComps)
@@ -272,8 +267,8 @@ namespace Robust.Shared.Map
 
                 if (result != null)
                 {
-                    _mapEntities.Add(actualID, result.Owner.Uid);
-                    Logger.DebugS("map", $"Rebinding map {actualID} to entity {result.Owner.Uid}");
+                    _mapEntities.Add(actualID, result.OwnerUid);
+                    Logger.DebugS("map", $"Rebinding map {actualID} to entity {result.OwnerUid}");
                 }
                 else
                 {
@@ -282,8 +277,8 @@ namespace Robust.Shared.Map
 
                     var mapComp = newEnt.AddComponent<MapComponent>();
                     mapComp.WorldMap = actualID;
-                    newEnt.InitializeComponents();
-                    newEnt.StartAllComponents();
+                    _entityManager.InitializeComponents(newEnt.Uid);
+                    _entityManager.StartComponents(newEnt.Uid);
                     Logger.DebugS("map", $"Binding map {actualID} to entity {newEnt.Uid}");
                 }
             }
@@ -308,8 +303,8 @@ namespace Robust.Shared.Map
             var newEntity = (Entity) _entityManager.CreateEntityUninitialized(null);
             SetMapEntity(mapId, newEntity);
 
-            newEntity.InitializeComponents();
-            newEntity.StartAllComponents();
+            _entityManager.InitializeComponents(newEntity.Uid);
+            _entityManager.StartComponents(newEntity.Uid);
 
             return newEntity;
         }
@@ -453,7 +448,7 @@ namespace Robust.Shared.Map
             {
                 // the entity may already exist from map deserialization
                 IMapGridComponent? result = null;
-                foreach (var comp in _entityManager.ComponentManager.EntityQuery<IMapGridComponent>(true))
+                foreach (var comp in _entityManager.EntityQuery<IMapGridComponent>(true))
                 {
                     if (comp.GridIndex != actualID)
                         continue;
@@ -464,7 +459,7 @@ namespace Robust.Shared.Map
 
                 if (result != null)
                 {
-                    grid.GridEntityId = result.Owner.Uid;
+                    grid.GridEntityId = result.OwnerUid;
                     Logger.DebugS("map", $"Rebinding grid {actualID} to entity {grid.GridEntityId}");
                 }
                 else
@@ -484,8 +479,8 @@ namespace Robust.Shared.Map
                     //use in transform states anytime before the state parent is properly set.
                     gridEnt.Transform.AttachParent(GetMapEntity(currentMapID));
 
-                    gridEnt.InitializeComponents();
-                    gridEnt.StartAllComponents();
+                    _entityManager.InitializeComponents(gridEnt.Uid);
+                    _entityManager.StartComponents(gridEnt.Uid);
                 }
             }
             else
@@ -534,7 +529,9 @@ namespace Robust.Shared.Map
         {
             foreach (var (_, mapGrid) in _grids)
             {
-                if (mapGrid.ParentMapId != mapId || !mapGrid.WorldBounds.Contains(worldPos))
+                // So not sure if doing the transform for WorldBounds and early out here is faster than just
+                // checking if we have a relevant chunk, need to profile.
+                if (mapGrid.ParentMapId != mapId)
                     continue;
 
                 // Turn the worldPos into a localPos and work out the relevant chunk we need to check
@@ -543,34 +540,20 @@ namespace Robust.Shared.Map
 
                 // Doesn't use WorldBounds because it's just an AABB.
                 var gridEnt = _entityManager.GetEntity(mapGrid.GridEntityId);
-                var gridPos = gridEnt.Transform.WorldPosition;
-                var gridRot = -gridEnt.Transform.WorldRotation;
-
-                var localPos = new Angle(gridRot).RotateVec(worldPos - gridPos);
+                var matrix = gridEnt.Transform.InvWorldMatrix;
+                var localPos = matrix.Transform(worldPos);
 
                 var tile = new Vector2i((int) Math.Floor(localPos.X), (int) Math.Floor(localPos.Y));
                 var chunkIndices = mapGrid.GridTileToChunkIndices(tile);
 
                 if (!mapGrid.HasChunk(chunkIndices)) continue;
-                if (!gridEnt.TryGetComponent(out PhysicsComponent? body)) continue;
 
-                var transform = new Transform(gridPos, (float) gridRot);
-                // TODO: Client never associates Fixtures with chunks hence we need to look it up by ID.
                 var chunk = mapGrid.GetChunk(chunkIndices);
-                var id = _gridFixtures.GetChunkId((MapChunk) chunk);
-                var fixture = body.GetFixture(id);
+                var chunkTile = chunk.GetTileRef(chunk.GridTileToChunkTile(tile));
 
-                if (fixture == null) continue;
-
-                for (var i = 0; i < fixture.Shape.ChildCount; i++)
-                {
-                    // TODO: Use CollisionManager once it's done.
-                    if (fixture.Shape.ComputeAABB(transform, i).Contains(worldPos))
-                    {
-                        grid = mapGrid;
-                        return true;
-                    }
-                }
+                if (chunkTile.Tile.IsEmpty) continue;
+                grid = mapGrid;
+                return true;
             }
 
             grid = null;
@@ -583,67 +566,117 @@ namespace Robust.Shared.Map
             return TryFindGridAt(mapCoordinates.MapId, mapCoordinates.Position, out grid);
         }
 
-        public IEnumerable<IMapGrid> FindGridsIntersecting(MapId mapId, Box2 worldArea)
+        public void FindGridsIntersectingEnumerator(MapId mapId, Box2 worldAABB, out FindGridsEnumerator enumerator, bool approx = false)
         {
+            enumerator = new FindGridsEnumerator(_entityManager, _grids.GetEnumerator(), mapId, worldAABB, approx);
+        }
+
+        /// <inheritdoc />
+        public IEnumerable<IMapGrid> FindGridsIntersecting(MapId mapId, Box2 worldAABB, bool approx = false)
+        {
+            // So despite the fact we have accurate bounds the reason I didn't make this tile-based is because
+            // at some stage we may want to overwrite the default behavior e.g. if you allow diagonals
             foreach (var (_, grid) in _grids)
             {
                 if (grid.ParentMapId != mapId) continue;
 
-                var found = false;
+                var xformComp = _entityManager.GetComponent<TransformComponent>(grid.GridEntityId);
+                var invMatrix3 = xformComp.InvWorldMatrix;
+                var localAABB = invMatrix3.TransformBox(worldAABB);
 
-                // TODO: Future optimisation; we can probably do a very fast check with no fixtures
-                // by just knowing the chunk bounds of the grid and then checking that first
-                // this will mainly be helpful once we get multiple grids.
-                var gridEnt = _entityManager.GetEntity(grid.GridEntityId);
-                var body = gridEnt.GetComponent<PhysicsComponent>();
-                var transform = new Transform(gridEnt.Transform.WorldPosition, (float) gridEnt.Transform.WorldRotation);
+                if (!localAABB.Intersects(grid.LocalBounds)) continue;
 
-                if (body.FixtureCount > 0)
+                var intersects = false;
+
+                if (_entityManager.HasComponent<PhysicsComponent>(grid.GridEntityId))
                 {
-                    // We can't rely on the broadphase proxies existing as they're deferred until physics requires the update.
-                    foreach (var fixture in body.Fixtures)
+                    grid.GetLocalMapChunks(localAABB, out var enumerator);
+
+                    if (!approx)
                     {
-                        for (var i = 0; i < fixture.Shape.ChildCount; i++)
+                        var transform = new Transform(xformComp.WorldPosition, xformComp.WorldRotation);
+
+                        while (!intersects && enumerator.MoveNext(out var chunk))
                         {
-                            // TODO: Need to use CollisionManager to test detailed overlap
-                            if (fixture.Shape.ComputeAABB(transform, i).Intersects(worldArea))
+                            foreach (var fixture in chunk.Fixtures)
                             {
-                                yield return grid;
-                                found = true;
-                                break;
+                                for (var i = 0; i < fixture.Shape.ChildCount; i++)
+                                {
+                                    if (!fixture.Shape.ComputeAABB(transform, i).Intersects(worldAABB)) continue;
+
+                                    intersects = true;
+                                    break;
+                                }
+
+                                if (intersects) break;
                             }
                         }
-
-                        if (found)
-                            break;
+                    }
+                    else
+                    {
+                        intersects = enumerator.MoveNext(out _);
                     }
                 }
-                else if (worldArea.Contains(transform.Position))
+
+                if (intersects || grid.ChunkCount == 0 && worldAABB.Contains(xformComp.WorldPosition))
                 {
                     yield return grid;
                 }
             }
         }
 
-        public IEnumerable<GridId> FindGridIdsIntersecting(MapId mapId, Box2 worldArea, bool includeInvalid = false)
+        /// <inheritdoc />
+        public IEnumerable<IMapGrid> FindGridsIntersecting(MapId mapId, Box2Rotated worldArea, bool approx = false)
         {
-            var broadphase = EntitySystem.Get<SharedBroadphaseSystem>();
+            var worldAABB = worldArea.CalcBoundingBox();
 
-            foreach (var broady in broadphase.GetBroadphases(mapId, worldArea))
+            foreach (var (_, grid) in _grids)
             {
-                if (!broady.Owner.TryGetComponent(out MapGridComponent? mapGridComponent)) continue;
+                if (grid.ParentMapId != mapId) continue;
 
-                yield return mapGridComponent.GridIndex;
+                var xformComp = _entityManager.GetComponent<TransformComponent>(grid.GridEntityId);
+                var invMatrix3 = xformComp.InvWorldMatrix;
+                var localAABB = invMatrix3.TransformBox(worldAABB);
 
-                // TODO: Optimise this. Need to avoid returning invalid unless absolutely necessary but still this check
-                // be hella expensive. Also doesn't account for rotation so.
-                if (broady.Owner.GetComponent<PhysicsComponent>().GetWorldAABB().Encloses(worldArea))
+                if (!localAABB.Intersects(grid.LocalBounds)) continue;
+
+                var intersects = false;
+
+                if (_entityManager.HasComponent<PhysicsComponent>(grid.GridEntityId))
                 {
-                    yield break;
+                    grid.GetLocalMapChunks(localAABB, out var enumerator);
+
+                    if (!approx)
+                    {
+                        var transform = new Transform(xformComp.WorldPosition, xformComp.WorldRotation);
+
+                        while (!intersects && enumerator.MoveNext(out var chunk))
+                        {
+                            foreach (var fixture in chunk.Fixtures)
+                            {
+                                for (var i = 0; i < fixture.Shape.ChildCount; i++)
+                                {
+                                    if (!fixture.Shape.ComputeAABB(transform, i).Intersects(worldAABB)) continue;
+
+                                    intersects = true;
+                                    break;
+                                }
+
+                                if (intersects) break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        intersects = enumerator.MoveNext(out _);
+                    }
+                }
+
+                if (intersects || grid.ChunkCount == 0 && worldAABB.Contains(xformComp.WorldPosition))
+                {
+                    yield return grid;
                 }
             }
-
-            yield return GridId.Invalid;
         }
 
         public virtual void DeleteGrid(GridId gridID)
@@ -663,7 +696,7 @@ namespace Robust.Shared.Map
                 if (gridEnt.LifeStage >= EntityLifeStage.Terminating)
                     return;
 
-                if (gridEnt.LifeStage <= EntityLifeStage.Initialized)
+                if (gridEnt.LifeStage <= EntityLifeStage.MapInitialized)
                     gridEnt.Delete();
             }
 

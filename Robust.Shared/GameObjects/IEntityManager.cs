@@ -1,13 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using JetBrains.Annotations;
 using Prometheus;
 using Robust.Shared.Map;
 using Robust.Shared.Timing;
 
 namespace Robust.Shared.GameObjects
 {
-    public interface IEntityManager
+    /// <summary>
+    ///     Holds a collection of entities and the components attached to them.
+    /// </summary>
+    [PublicAPI]
+    public partial interface IEntityManager
     {
         /// <summary>
         ///     The current simulation tick being processed.
@@ -25,7 +30,6 @@ namespace Robust.Shared.GameObjects
         void FrameUpdate(float frameTime);
 
         IComponentFactory ComponentFactory { get; }
-        IComponentManager ComponentManager { get; }
         IEntitySystemManager EntitySysManager { get; }
         IEntityNetworkManager? EntityNetManager { get; }
         IEventBus EventBus { get; }
@@ -81,6 +85,14 @@ namespace Robust.Shared.GameObjects
         /// </summary>
         /// <returns></returns>
         IEnumerable<IEntity> GetEntities();
+
+        /// <summary>
+        /// Returns all entities by uid
+        /// </summary>
+        /// <returns></returns>
+        IEnumerable<EntityUid> GetEntityUids();
+        
+        public void DirtyEntity(EntityUid uid);
 
         public void QueueDeleteEntity(IEntity entity);
 

@@ -1,3 +1,4 @@
+using Robust.Server.Bql;
 using Robust.Server.Console;
 using Robust.Server.DataMetrics;
 using Robust.Server.Debugging;
@@ -71,6 +72,7 @@ namespace Robust.Server
             IoCManager.Register<IMetricsManager, MetricsManager>();
             IoCManager.Register<IAuthManager, AuthManager>();
             IoCManager.Register<IPhysicsManager, PhysicsManager>();
+            IoCManager.Register<IBqlQueryManager, BqlQueryManager>();
         }
     }
 }

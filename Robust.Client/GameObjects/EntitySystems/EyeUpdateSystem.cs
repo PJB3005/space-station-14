@@ -2,11 +2,14 @@
 using JetBrains.Annotations;
 using Robust.Client.Graphics;
 using Robust.Client.Physics;
+using Robust.Client.Player;
 using Robust.Shared.GameObjects;
 using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.IoC;
+using Robust.Shared.Map;
 using Robust.Shared.Maths;
+using Robust.Shared.Timing;
 
 #nullable enable
 
@@ -18,14 +21,23 @@ namespace Robust.Client.GameObjects
     [UsedImplicitly]
     internal class EyeUpdateSystem : EntitySystem
     {
-        // How fast the camera rotates in radians
-        private const float CameraRotateSpeed = MathF.PI;
-        private const float CameraSnapTolerance = 0.01f;
+        [Dependency] private readonly IEyeManager _eyeManager = default!;
+        [Dependency] private readonly IMapManager _mapManager = default!;
+        [Dependency] private readonly IPlayerManager _playerManager = default!;
 
-#pragma warning disable 649, CS8618
-        // ReSharper disable once NotNullMemberIsNotInitialized
-        [Dependency] private readonly IEyeManager _eyeManager;
-#pragma warning restore 649, CS8618
+        private TransformComponent? _lastParent;
+        private TransformComponent? _lerpTo;
+        private Angle LerpStartRotation;
+        private float _accumulator;
+
+        public bool IsLerping { get => _lerpTo != null; }
+
+        // How fast the camera rotates in radians / s
+        private const float CameraRotateSpeed = MathF.PI;
+        // PER THIS AMOUNT OF TIME MILLISECONDS
+        private const float CameraRotateTimeUnit = 1.2f;
+        // Safety override
+        private const float _lerpTimeMax = CameraRotateTimeUnit + 0.4f;
 
         /// <inheritdoc />
         public override void Initialize()
@@ -55,39 +67,69 @@ namespace Robust.Client.GameObjects
         public override void FrameUpdate(float frameTime)
         {
             var currentEye = _eyeManager.CurrentEye;
-            var inputSystem = EntitySystemManager.GetEntitySystem<InputSystem>();
 
-            var direction = 0;
-            if (inputSystem.CmdStates[EngineKeyFunctions.CameraRotateRight] == BoundKeyState.Down)
-            {
-                direction += 1;
-            }
+            // TODO: Content should have its own way of handling this. We should have a default behavior that they can overwrite.
 
-            if (inputSystem.CmdStates[EngineKeyFunctions.CameraRotateLeft] == BoundKeyState.Down)
-            {
-                direction -= 1;
-            }
+            var playerTransform = _playerManager.LocalPlayer?.ControlledEntity?.Transform;
 
-            // apply camera rotation
-            if(direction != 0)
-            {
-                currentEye.Rotation += CameraRotateSpeed * frameTime * direction;
-                currentEye.Rotation = currentEye.Rotation.Reduced();
-            }
-            else
-            {
-                // snap to cardinal directions
-                var closestDir = currentEye.Rotation.GetCardinalDir().ToVec();
-                var currentDir = currentEye.Rotation.ToVec();
+            if (playerTransform == null) return;
 
-                var dot = Vector2.Dot(closestDir, currentDir);
-                if (MathHelper.CloseTo(dot, 1, CameraSnapTolerance))
+            var gridId = playerTransform.GridID;
+
+            var parent = gridId != GridId.Invalid && EntityManager.TryGetEntity(_mapManager.GetGrid(gridId).GridEntityId, out var gridEnt) ?
+                gridEnt.Transform
+                : _mapManager.GetMapEntity(playerTransform.MapID).Transform;
+
+            // Make sure that we don't fire the vomit carousel when we spawn in
+            if (_lastParent is null)
+                _lastParent = parent;
+
+            // Set a default for target rotation
+            var parentRotation = -parent.WorldRotation;
+            // Reuse current rotation when stepping into space
+            if (parent.GridID == GridId.Invalid)
+                parentRotation = currentEye.Rotation;
+
+            // Handle grid change in general
+            if (_lastParent != parent)
+                _lerpTo = parent;
+
+            // And we are up and running!
+            if (_lerpTo is not null)
+            {
+                // Handle a case where we have beeing spinning around, but suddenly got off onto a different grid
+                if (parent != _lerpTo) {
+                    LerpStartRotation = currentEye.Rotation;
+                    _lerpTo = parent;
+                    _accumulator = 0f;
+                }
+
+                _accumulator += frameTime;
+
+                var changeNeeded = (float) (LerpStartRotation - parentRotation).Theta;
+
+                var changeLerp = _accumulator / (Math.Abs(changeNeeded % MathF.PI) / CameraRotateSpeed * CameraRotateTimeUnit);
+
+                currentEye.Rotation = Angle.Lerp(LerpStartRotation, parentRotation, changeLerp);
+
+                // Either we have overshot, or we have taken way too long on this, emergency reset time
+                if (changeLerp > 1.0f || _accumulator >= _lerpTimeMax)
                 {
-                    currentEye.Rotation = closestDir.ToAngle();
+                    _lastParent = parent;
+                    _lerpTo = null;
+                    _accumulator = 0f;
                 }
             }
 
-            foreach (var eyeComponent in EntityManager.ComponentManager.EntityQuery<EyeComponent>(true))
+            // We are just fine, or we finished a lerp (and probably overshot)
+            if (_lerpTo is null)
+            {
+                currentEye.Rotation = parentRotation;
+                LerpStartRotation = parentRotation;
+            }
+
+
+            foreach (var eyeComponent in EntityManager.EntityQuery<EyeComponent>(true))
             {
                 eyeComponent.UpdateEyePosition();
             }

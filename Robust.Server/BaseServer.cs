@@ -1,8 +1,6 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime;
-using System.Runtime.InteropServices;
 using System.Threading;
 using Prometheus;
 using Robust.Server.Console;
@@ -34,7 +32,6 @@ using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 using Serilog.Debugging;
 using Serilog.Sinks.Loki;
-using Stopwatch = Robust.Shared.Timing.Stopwatch;
 
 namespace Robust.Server
 {
@@ -65,7 +62,6 @@ namespace Robust.Server
             });
 
         [Dependency] private readonly IConfigurationManagerInternal _config = default!;
-        [Dependency] private readonly IComponentManager _components = default!;
         [Dependency] private readonly IServerEntityManager _entityManager = default!;
         [Dependency] private readonly IEntityLookup _lookup = default!;
         [Dependency] private readonly ILogManager _log = default!;
@@ -85,6 +81,7 @@ namespace Robust.Server
         [Dependency] private readonly IMetricsManager _metricsManager = default!;
         [Dependency] private readonly IRobustMappedStringSerializer _stringSerializer = default!;
         [Dependency] private readonly ILocalizationManagerInternal _loc = default!;
+        [Dependency] private readonly INetConfigurationManager _netCfgMan = default!;
 
         private readonly Stopwatch _uptimeStopwatch = new();
 
@@ -450,6 +447,12 @@ namespace Robust.Server
 
         private void ProcessExiting(object? sender, EventArgs e)
         {
+            // If the main loop is not running the task will never get processed on the main thread
+            if (!_mainLoop.Running)
+            {
+                return;
+            }
+
             _taskManager.RunOnMainThread(() => Shutdown("ProcessExited"));
             // Give the server 10 seconds to shut down.
             // If it still hasn't managed to assume it's stuck or something.
@@ -547,7 +550,7 @@ namespace Robust.Server
 
             if (_config.GetCVar(CVars.LogRuntimeLog))
             {
-                // Wrtie down exception log
+                // Write down exception log
                 var logPath = _config.GetCVar(CVars.LogPath);
                 var relPath = PathHelpers.ExecutableRelativeFile(logPath);
                 Directory.CreateDirectory(relPath);
@@ -591,7 +594,7 @@ namespace Robust.Server
 
             using (TickUsage.WithLabels("NetworkedCVar").NewTimer())
             {
-                IoCManager.Resolve<INetConfigurationManager>().TickProcessMessages();
+                _netCfgMan.TickProcessMessages();
             }
 
             using (TickUsage.WithLabels("Timers").NewTimer())
@@ -602,11 +605,6 @@ namespace Robust.Server
             using (TickUsage.WithLabels("AsyncTasks").NewTimer())
             {
                 _taskManager.ProcessPendingTasks();
-            }
-
-            using (TickUsage.WithLabels("ComponentCull").NewTimer())
-            {
-                _components.CullRemovedComponents();
             }
 
             // Pass Histogram into the IEntityManager.Update so it can do more granular measuring.

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Robust.Shared.GameObjects;
-using Robust.Shared.IoC;
-using Robust.Shared.Log;
 using Robust.Shared.Maths;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
@@ -74,7 +72,10 @@ namespace Robust.Shared.Map
 
         /// <inheritdoc />
         [ViewVariables]
-        public Box2 WorldBounds => LocalBounds.Translated(WorldPosition);
+        public Box2 WorldBounds =>
+            new Box2Rotated(LocalBounds, WorldRotation, Vector2.Zero)
+                .CalcBoundingBox()
+                .Translated(WorldPosition);
 
         /// <inheritdoc />
         [ViewVariables]
@@ -140,7 +141,7 @@ namespace Robust.Shared.Map
             {
                 //TODO: Make grids real parents of entities.
                 if(GridEntityId.IsValid())
-                    return _mapManager.EntityManager.GetEntity(GridEntityId).Transform.WorldMatrix;
+                    return _mapManager.EntityManager.GetComponent<TransformComponent>(GridEntityId).WorldMatrix;
 
                 return Matrix3.Identity;
             }
@@ -154,7 +155,7 @@ namespace Robust.Shared.Map
             {
                 //TODO: Make grids real parents of entities.
                 if(GridEntityId.IsValid())
-                    return _mapManager.EntityManager.GetEntity(GridEntityId).Transform.InvWorldMatrix;
+                    return _mapManager.EntityManager.GetComponent<TransformComponent>(GridEntityId).InvWorldMatrix;
 
                 return Matrix3.Identity;
             }
@@ -164,7 +165,7 @@ namespace Robust.Shared.Map
         /// Expands the AABB for this grid when a new tile is added. If the tile is already inside the existing AABB,
         /// nothing happens. If it is outside, the AABB is expanded to fit the new tile.
         /// </summary>
-        private void UpdateAABB()
+        public void UpdateAABB()
         {
             LocalBounds = new Box2();
             foreach (var chunk in _chunks.Values)
@@ -194,25 +195,13 @@ namespace Robust.Shared.Map
             _mapManager.RaiseOnTileChanged(tileRef, oldTile);
         }
 
-        /// <inheritdoc />
-        public void NotifyChunkCollisionRegenerated(MapChunk chunk)
-        {
-            // TODO: Ideally we wouldn't have LocalBounds on the grid and we could just treat it like a physics object
-            // (eventually, well into the future).
-            // For now we'll just attach a fixture to each chunk.
-
-            // Not raising directed because the grid's EntityUid isn't set yet.
-            // Don't call GridFixtureSystem directly because it's server-only.
-            if (chunk.ValidTiles > 0)
-                IoCManager
-                .Resolve<IEntityManager>()
-                .EventBus
-                .RaiseEvent(EventSource.Local, new RegenerateChunkCollisionEvent(chunk));
-
-            UpdateAABB();
-        }
-
         #region TileAccess
+
+        /// <inheritdoc />
+        public TileRef GetTileRef(MapCoordinates coords)
+        {
+            return GetTileRef(CoordinatesToTile(coords));
+        }
 
         /// <inheritdoc />
         public TileRef GetTileRef(EntityCoordinates coords)
@@ -282,12 +271,32 @@ namespace Robust.Shared.Map
             }
         }
 
+        public IEnumerable<TileRef> GetTilesIntersecting(Box2Rotated worldArea, bool ignoreEmpty = true,
+            Predicate<TileRef>? predicate = null)
+        {
+            var matrix = InvWorldMatrix;
+            var localArea = matrix.TransformBox(worldArea);
+
+            foreach (var tile in GetLocalTilesIntersecting(localArea, ignoreEmpty, predicate))
+            {
+                yield return tile;
+            }
+        }
+
         /// <inheritdoc />
         public IEnumerable<TileRef> GetTilesIntersecting(Box2 worldArea, bool ignoreEmpty = true, Predicate<TileRef>? predicate = null)
         {
             var matrix = InvWorldMatrix;
+            var localArea = matrix.TransformBox(worldArea);
 
-            var localArea = new Box2(matrix.Transform(worldArea.BottomLeft), matrix.Transform(worldArea.TopRight));
+            foreach (var tile in GetLocalTilesIntersecting(localArea, ignoreEmpty, predicate))
+            {
+                yield return tile;
+            }
+        }
+
+        private IEnumerable<TileRef> GetLocalTilesIntersecting(Box2 localArea, bool ignoreEmpty, Predicate<TileRef>? predicate)
+        {
             var gridTileLb = new Vector2i((int)Math.Floor(localArea.Left), (int)Math.Floor(localArea.Bottom));
             var gridTileRt = new Vector2i((int)Math.Floor(localArea.Right), (int)Math.Floor(localArea.Top));
 
@@ -306,19 +315,14 @@ namespace Robust.Shared.Map
                             continue;
 
                         if (predicate == null || predicate(tile))
-                        {
                             yield return tile;
-
-                        }
                     }
                     else if (!ignoreEmpty)
                     {
                         var tile = new TileRef(ParentMapId, Index, x, y, new Tile());
 
                         if (predicate == null || predicate(tile))
-                        {
                             yield return tile;
-                        }
                     }
                 }
             }
@@ -400,30 +404,81 @@ namespace Robust.Shared.Map
             return _chunks;
         }
 
-        public IEnumerable<IMapChunkInternal> GetMapChunks(Box2 worldAABB)
+        internal struct ChunkEnumerator
         {
-            var worldPos = WorldPosition;
-            var localArea = new Box2Rotated(worldAABB.Translated(-worldPos), -WorldRotation).CalcBoundingBox();
+            private Dictionary<Vector2i, IMapChunkInternal> _chunks;
+            private Vector2i _chunkLB;
+            private Vector2i _chunkRT;
 
-            var chunkLB = new Vector2i((int)Math.Floor(localArea.Left / ChunkSize), (int)Math.Floor(localArea.Bottom / ChunkSize));
-            var chunkRT = new Vector2i((int)Math.Floor(localArea.Right / ChunkSize), (int)Math.Floor(localArea.Top / ChunkSize));
+            private int _xIndex;
+            private int _yIndex;
 
-            for (var x = chunkLB.X; x <= chunkRT.X; x++)
+            internal ChunkEnumerator(Dictionary<Vector2i, IMapChunkInternal> chunks, Box2 localAABB, int chunkSize)
             {
-                for (var y = chunkLB.Y; y <= chunkRT.Y; y++)
-                {
-                    var gridChunk = new Vector2i(x, y);
+                _chunks = chunks;
 
-                    if (!_chunks.TryGetValue(gridChunk, out var chunk)) continue;
+                _chunkLB = new Vector2i((int)Math.Floor(localAABB.Left / chunkSize), (int)Math.Floor(localAABB.Bottom / chunkSize));
+                _chunkRT = new Vector2i((int)Math.Floor(localAABB.Right / chunkSize), (int)Math.Floor(localAABB.Top / chunkSize));
 
-                    yield return chunk;
-                }
+                _xIndex = _chunkLB.X;
+                _yIndex = _chunkLB.Y;
             }
+
+            public bool MoveNext([NotNullWhen(true)] out IMapChunkInternal? chunk)
+            {
+                if (_yIndex > _chunkRT.Y)
+                {
+                    _yIndex = _chunkLB.Y;
+                    _xIndex += 1;
+                }
+
+                for (var x = _xIndex; x <= _chunkRT.X; x++)
+                {
+                    for (var y = _yIndex; y <= _chunkRT.Y; y++)
+                    {
+                        var gridChunk = new Vector2i(x, y);
+                        if (!_chunks.TryGetValue(gridChunk, out chunk)) continue;
+                        _xIndex = x;
+                        _yIndex = y + 1;
+                        return true;
+                    }
+
+                    _yIndex = _chunkLB.Y;
+                }
+
+                chunk = null;
+                return false;
+            }
+        }
+
+        public void GetMapChunks(Box2 worldAABB, out ChunkEnumerator enumerator)
+        {
+            var localArea = InvWorldMatrix.TransformBox(worldAABB);
+            enumerator = new ChunkEnumerator(_chunks, localArea, ChunkSize);
+        }
+
+        public void GetMapChunks(Box2Rotated worldArea, out ChunkEnumerator enumerator)
+        {
+            var matrix = InvWorldMatrix;
+            var localArea = matrix.TransformBox(worldArea);
+
+            enumerator = new ChunkEnumerator(_chunks, localArea, ChunkSize);
+        }
+
+        public void GetLocalMapChunks(Box2 localAABB, out ChunkEnumerator enumerator)
+        {
+            enumerator = new ChunkEnumerator(_chunks, localAABB, ChunkSize);
         }
 
         #endregion ChunkAccess
 
         #region SnapGridAccess
+
+        /// <inheritdoc />
+        public IEnumerable<EntityUid> GetAnchoredEntities(MapCoordinates coords)
+        {
+            return GetAnchoredEntities(TileIndicesFor(coords));
+        }
 
         /// <inheritdoc />
         public IEnumerable<EntityUid> GetAnchoredEntities(EntityCoordinates coords)
@@ -448,6 +503,18 @@ namespace Robust.Shared.Map
         public IEnumerable<EntityUid> GetAnchoredEntities(Box2 worldAABB)
         {
             foreach (var tile in GetTilesIntersecting(worldAABB))
+            {
+                foreach (var ent in GetAnchoredEntities(tile.GridIndices))
+                {
+                    yield return ent;
+                }
+            }
+        }
+
+        /// <inheritdoc />
+        public IEnumerable<EntityUid> GetAnchoredEntities(Box2Rotated worldBounds)
+        {
+            foreach (var tile in GetTilesIntersecting(worldBounds))
             {
                 foreach (var ent in GetAnchoredEntities(tile.GridIndices))
                 {
@@ -656,9 +723,19 @@ namespace Robust.Shared.Map
             return new Vector2i(x, y);
         }
 
-        /// <summary>
-        ///     Transforms entity coordinates to tile indices relative to grid origin.
-        /// </summary>
+        /// <inheritdoc />
+        public Vector2i CoordinatesToTile(MapCoordinates coords)
+        {
+            DebugTools.Assert(ParentMapId == coords.MapId);
+
+            var local = WorldToLocal(coords.Position);
+
+            var x = (int)Math.Floor(local.X / TileSize);
+            var y = (int)Math.Floor(local.Y / TileSize);
+            return new Vector2i(x, y);
+        }
+
+        /// <inheritdoc />
         public Vector2i CoordinatesToTile(EntityCoordinates coords)
         {
             DebugTools.Assert(ParentMapId == coords.GetMapId(_entityManager));
@@ -674,9 +751,7 @@ namespace Robust.Shared.Map
             return new Vector2i(x, y);
         }
 
-        /// <summary>
-        ///     Transforms global world coordinates to chunk indices relative to grid origin.
-        /// </summary>
+        /// <inheritdoc />
         public Vector2i LocalToChunkIndices(EntityCoordinates gridPos)
         {
             Vector2 local;
@@ -726,7 +801,7 @@ namespace Robust.Shared.Map
             var locX = gridTile.X * TileSize + (TileSize / 2f);
             var locY = gridTile.Y * TileSize + (TileSize / 2f);
 
-            return new Vector2(locX, locY) + WorldPosition;
+            return WorldMatrix.Transform(new Vector2(locX, locY));
         }
 
         public MapCoordinates GridTileToWorld(Vector2i gridTile)

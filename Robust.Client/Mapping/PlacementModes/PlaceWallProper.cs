@@ -9,7 +9,6 @@ namespace Robust.Client.Mapping.PlacementModes
     [PlacementModeName("AlignWallProper")]
     public sealed class PlaceWallProper : PlacementMode
     {
-        [Dependency] private readonly IComponentManager _componentManager = default!;
         [Dependency] private readonly IEntityManager _entityManager = default!;
 
         public PlaceWallProper()
@@ -19,7 +18,7 @@ namespace Robust.Client.Mapping.PlacementModes
 
         public override EntityCoordinates AlignMousePos(EntityCoordinates mousePosWorld)
         {
-            if (!_componentManager.TryGetComponent<MapGridComponent>(mousePosWorld.EntityId, out var mapGridComp))
+            if (!_entityManager.TryGetComponent<MapGridComponent>(mousePosWorld.EntityId, out var mapGridComp))
                 return mousePosWorld;
 
             var grid = mapGridComp.Grid;

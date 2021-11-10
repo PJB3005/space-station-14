@@ -17,7 +17,7 @@ namespace Robust.Client.UserInterface
 {
     /// <summary>
     ///     A node in the GUI system.
-    ///     See https://hackmd.io/@ss14/ui-system-tutorial for some basic concepts.
+    ///     See https://docs.spacestation14.io/en/engine/user-interface for some basic concepts.
     /// </summary>
     [PublicAPI]
     public partial class Control : IDisposable
@@ -39,6 +39,9 @@ namespace Robust.Client.UserInterface
         /// </summary>
         [ViewVariables]
         public string? Name { get; set; }
+
+        // ReSharper disable once ValueParameterNotUsed
+        public AccessLevel? Access { set { } }
 
         /// <summary>
         ///     If true, this control will always be rendered, even if other UI rendering is disabled.

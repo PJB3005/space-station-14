@@ -10,7 +10,7 @@ namespace Robust.Client.Mapping.PlacementModes
     [PlacementModeName("AlignTileAny")]
     public sealed class PlaceTileCenter : PlacementMode
     {
-        [Dependency] private readonly IComponentManager _componentManager = default!;
+        [Dependency] private readonly IEntityManager _entityManager = default!;
 
         public PlaceTileCenter()
         {
@@ -21,7 +21,7 @@ namespace Robust.Client.Mapping.PlacementModes
 
         public override EntityCoordinates AlignMousePos(EntityCoordinates mousePosWorld)
         {
-            if (!_componentManager.TryGetComponent<MapGridComponent>(mousePosWorld.EntityId, out var mapGridComp))
+            if (!_entityManager.TryGetComponent<MapGridComponent>(mousePosWorld.EntityId, out var mapGridComp))
                 return mousePosWorld;
 
             var grid = mapGridComp.Grid;
@@ -37,7 +37,7 @@ namespace Robust.Client.Mapping.PlacementModes
             if (startPos.EntityId != endPos.EntityId)
                 yield break;
 
-            if (!_componentManager.TryGetComponent<MapGridComponent>(startPos.EntityId, out var mapGridComp))
+            if (!_entityManager.TryGetComponent<MapGridComponent>(startPos.EntityId, out var mapGridComp))
                 yield break;
 
             var grid = mapGridComp.Grid;
