@@ -1,7 +1,6 @@
-﻿namespace Robust.Client.Mapping.PlacementModes
+﻿namespace Robust.Client.Mapping.PlacementModes;
+
+public sealed class PlaceFree : PlacementMode
 {
-    public sealed class PlaceFree : PlacementMode
-    {
-        public static readonly PlaceFree Instance = new();
-    }
+    public static readonly PlaceFree Instance = new();
 }

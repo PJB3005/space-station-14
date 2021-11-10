@@ -10,121 +10,120 @@ using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Map;
 using Robust.Shared.Utility;
 
-namespace Robust.Client.Mapping.UserInterface
+namespace Robust.Client.Mapping.UserInterface;
+
+[GenerateTypedNameReferences]
+public sealed partial class TileSpawnWindow : SS14Window
 {
-    [GenerateTypedNameReferences]
-    public sealed partial class TileSpawnWindow : SS14Window
+    private readonly ITileDefinitionManager _tileDefinitionManager;
+    private readonly MappingSystem _mappingSystem;
+    private readonly IResourceCache _resourceCache;
+
+    private readonly List<ITileDefinition> _shownItems = new();
+    private bool _clearingSelections;
+
+    public TileSpawnWindow(
+        ITileDefinitionManager tileDefinitionManager,
+        MappingSystem mappingSystem,
+        IResourceCache resourceCache)
     {
-        private readonly ITileDefinitionManager _tileDefinitionManager;
-        private readonly MappingSystem _mappingSystem;
-        private readonly IResourceCache _resourceCache;
+        _tileDefinitionManager = tileDefinitionManager;
+        _mappingSystem = mappingSystem;
+        _resourceCache = resourceCache;
 
-        private readonly List<ITileDefinition> _shownItems = new();
-        private bool _clearingSelections;
+        RobustXamlLoader.Load(this);
 
-        public TileSpawnWindow(
-            ITileDefinitionManager tileDefinitionManager,
-            MappingSystem mappingSystem,
-            IResourceCache resourceCache)
-        {
-            _tileDefinitionManager = tileDefinitionManager;
-            _mappingSystem = mappingSystem;
-            _resourceCache = resourceCache;
+        SearchBar.OnTextChanged += OnSearchBarTextChanged;
+        ClearButton.OnPressed += OnClearButtonPressed;
+        TileList.OnItemSelected += TileListOnOnItemSelected;
+        TileList.OnItemDeselected += TileListOnOnItemDeselected;
 
-            RobustXamlLoader.Load(this);
+        BuildTileList();
 
-            SearchBar.OnTextChanged += OnSearchBarTextChanged;
-            ClearButton.OnPressed += OnClearButtonPressed;
-            TileList.OnItemSelected += TileListOnOnItemSelected;
-            TileList.OnItemDeselected += TileListOnOnItemDeselected;
-
-            BuildTileList();
-
-            // _placementManager.PlacementChanged += OnPlacementCanceled;
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-
-            /*if (disposing)
-            {
-                _placementManager.PlacementChanged -= OnPlacementCanceled;
-            }*/
-        }
-
-                private void OnClearButtonPressed(BaseButton.ButtonEventArgs args)
-        {
-            SearchBar.Clear();
-            BuildTileList("");
-            ClearButton.Disabled = true;
-        }
-
-        private void OnSearchBarTextChanged(LineEdit.LineEditEventArgs args)
-        {
-            BuildTileList(args.Text);
-            ClearButton.Disabled = string.IsNullOrEmpty(args.Text);
-        }
-
-        private void BuildTileList(string? searchStr = null)
-        {
-            TileList.Clear();
-
-            IEnumerable<ITileDefinition> tileDefs = _tileDefinitionManager;
-
-            if (!string.IsNullOrEmpty(searchStr))
-            {
-                tileDefs = tileDefs.Where(s =>
-                    s.DisplayName.IndexOf(searchStr, StringComparison.InvariantCultureIgnoreCase) >= 0 ||
-                    s.Name.IndexOf(searchStr, StringComparison.OrdinalIgnoreCase) >= 0);
-            }
-
-            tileDefs = tileDefs.OrderBy(d => d.DisplayName);
-
-            _shownItems.Clear();
-            _shownItems.AddRange(tileDefs);
-
-            foreach (var entry in _shownItems)
-            {
-                Texture? texture = null;
-                if (!string.IsNullOrEmpty(entry.SpriteName))
-                {
-                    texture = _resourceCache.GetResource<TextureResource>(new ResourcePath(entry.Path) / $"{entry.SpriteName}.png");
-                }
-                TileList.AddItem(entry.DisplayName, texture);
-            }
-        }
-
-        private void OnPlacementCanceled(object? sender, EventArgs e)
-        {
-            _clearingSelections = true;
-            TileList.ClearSelected();
-            _clearingSelections = false;
-        }
-        private void TileListOnOnItemSelected(ItemList.ItemListSelectedEventArgs args)
-        {
-            var definition = _shownItems[args.ItemIndex];
-
-            /*var newObjInfo = new PlacementInformation
-            {
-                PlacementOption = "AlignTileAny",
-                TileType = definition.TileId,
-                Range = 400,
-                IsTile = true
-            };
-
-            _placementManager.BeginPlacing(newObjInfo);*/
-        }
-
-        private void TileListOnOnItemDeselected(ItemList.ItemListDeselectedEventArgs args)
-        {
-            if (_clearingSelections)
-            {
-                return;
-            }
-
-            /*_placementManager.Clear();*/
-        }
-
+        // _placementManager.PlacementChanged += OnPlacementCanceled;
     }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+
+        /*if (disposing)
+        {
+            _placementManager.PlacementChanged -= OnPlacementCanceled;
+        }*/
+    }
+
+    private void OnClearButtonPressed(BaseButton.ButtonEventArgs args)
+    {
+        SearchBar.Clear();
+        BuildTileList("");
+        ClearButton.Disabled = true;
+    }
+
+    private void OnSearchBarTextChanged(LineEdit.LineEditEventArgs args)
+    {
+        BuildTileList(args.Text);
+        ClearButton.Disabled = string.IsNullOrEmpty(args.Text);
+    }
+
+    private void BuildTileList(string? searchStr = null)
+    {
+        TileList.Clear();
+
+        IEnumerable<ITileDefinition> tileDefs = _tileDefinitionManager;
+
+        if (!string.IsNullOrEmpty(searchStr))
+        {
+            tileDefs = tileDefs.Where(s =>
+                s.DisplayName.IndexOf(searchStr, StringComparison.InvariantCultureIgnoreCase) >= 0 ||
+                s.Name.IndexOf(searchStr, StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+        tileDefs = tileDefs.OrderBy(d => d.DisplayName);
+
+        _shownItems.Clear();
+        _shownItems.AddRange(tileDefs);
+
+        foreach (var entry in _shownItems)
+        {
+            Texture? texture = null;
+            if (!string.IsNullOrEmpty(entry.SpriteName))
+            {
+                texture = _resourceCache.GetResource<TextureResource>(new ResourcePath(entry.Path) / $"{entry.SpriteName}.png");
+            }
+            TileList.AddItem(entry.DisplayName, texture);
+        }
+    }
+
+    private void OnPlacementCanceled(object? sender, EventArgs e)
+    {
+        _clearingSelections = true;
+        TileList.ClearSelected();
+        _clearingSelections = false;
+    }
+    private void TileListOnOnItemSelected(ItemList.ItemListSelectedEventArgs args)
+    {
+        var definition = _shownItems[args.ItemIndex];
+
+        /*var newObjInfo = new PlacementInformation
+        {
+            PlacementOption = "AlignTileAny",
+            TileType = definition.TileId,
+            Range = 400,
+            IsTile = true
+        };
+
+        _placementManager.BeginPlacing(newObjInfo);*/
+    }
+
+    private void TileListOnOnItemDeselected(ItemList.ItemListDeselectedEventArgs args)
+    {
+        if (_clearingSelections)
+        {
+            return;
+        }
+
+        /*_placementManager.Clear();*/
+    }
+
 }
