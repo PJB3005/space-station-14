@@ -406,7 +406,7 @@ public sealed partial class EntitySpawnWindow : SS14Window
 
             foreach (var child in Children)
             {
-                child.Arrange(UIBox2.FromDimensions(0, offset, Width, height));
+                child.Arrange(UIBox2.FromDimensions(0, offset, finalSize.X, height));
                 offset += Separation + height;
             }
 
