@@ -134,7 +134,7 @@ public sealed class PlacementSystem : EntitySystem
                 return true;
 
             case PlacementType.Erasement:
-                if (args.EntityUid.IsValid())
+                if (!args.EntityUid.IsValid())
                     return false;
 
                 var erasedEv = new MappingErasedEventArgs
