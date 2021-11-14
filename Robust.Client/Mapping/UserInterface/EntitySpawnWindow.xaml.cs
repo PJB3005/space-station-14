@@ -317,15 +317,21 @@ public sealed partial class EntitySpawnWindow : SS14Window
 
     private void PlacementPlaced(MappingPlacedEventArgs[] obj)
     {
+        DebugTools.AssertNotNull(SelectedPrototype != null);
+
         foreach (var placement in obj)
         {
             Logger.Info($"Placed: {placement.Coordinates} {placement.Direction}");
         }
+
+        _mapping.DoEntityPlace(SelectedPrototype!.ID, obj.Select(p => (p.Coordinates, p.Direction)).ToArray());
     }
 
     private void PlacementErased(MappingErasedEventArgs eventArgs)
     {
         Logger.Info($"Erased: {eventArgs.Entity}");
+
+        _mapping.DoEntityErase(eventArgs.Entity);
     }
 
     private void PlacementCancelled()
