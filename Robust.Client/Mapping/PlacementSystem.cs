@@ -126,6 +126,10 @@ public sealed class PlacementSystem : EntitySystem
                     };
                 }
 
+                // Reset grouped placement info.
+                _groupPlaceOrigin = default;
+                _placementGroup = default;
+
                 _placement.EventPlaced?.Invoke(events);
                 return true;
 
