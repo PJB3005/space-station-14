@@ -44,7 +44,6 @@ namespace Robust.Client.Input
         [Dependency] private readonly IResourceManager _resourceMan = default!;
         [Dependency] private readonly IReflectionManager _reflectionManager = default!;
         [Dependency] private readonly IUserInterfaceManagerInternal _uiMgr = default!;
-        [Dependency] private readonly IConfigurationManager _cfg = default!;
         [Dependency] private readonly IConsoleHost _console = default!;
 
         private bool _currentlyFindingViewport;
@@ -502,7 +501,7 @@ namespace Robust.Client.Input
 
                 foreach (var reg in baseKeyRegs)
                 {
-                    if (!NetworkBindMap.FunctionExists(reg.Function.FunctionName))
+                    if (reg.Type != KeyBindingType.Command && !NetworkBindMap.FunctionExists(reg.Function.FunctionName))
                     {
                         Logger.ErrorS("input", "Key function in {0} does not exist: '{1}'", file,
                             reg.Function);
