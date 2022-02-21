@@ -1,1 +1,2 @@
-﻿global using Robust.Shared.Analyzers;
+﻿global using System;
+global using Robust.Shared.Analyzers;
