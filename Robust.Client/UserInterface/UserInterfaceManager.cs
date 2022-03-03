@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Robust.Client.Graphics;
 using Robust.Client.Input;
@@ -12,6 +11,7 @@ using Robust.Shared.Configuration;
 using Robust.Shared.Input;
 using Robust.Shared.Input.Binding;
 using Robust.Shared.IoC;
+using Robust.Shared.Log;
 using Robust.Shared.Map;
 using Robust.Shared.Maths;
 using Robust.Shared.Network;
@@ -20,7 +20,7 @@ using Robust.Shared.ViewVariables;
 
 namespace Robust.Client.UserInterface
 {
-    internal sealed class UserInterfaceManager : IUserInterfaceManagerInternal
+    internal sealed partial class UserInterfaceManager : IUserInterfaceManagerInternal
     {
         [Dependency] private readonly IInputManager _inputManager = default!;
         [Dependency] private readonly IClydeInternal _clyde = default!;
@@ -103,9 +103,14 @@ namespace Robust.Client.UserInterface
         private readonly List<WindowRoot> _roots = new();
         private readonly Dictionary<WindowId, WindowRoot> _windowsToRoot = new();
 
+        private ISawmill _sawmill = default!;
+
         public void Initialize()
         {
             _configurationManager.OnValueChanged(CVars.DisplayUIScale, _uiScaleChanged, true);
+            _configurationManager.OnValueChanged(CVars.UIDragThreshold, v => _dragThresholdSquared = v * v, true);
+
+            _sawmill = Logger.GetSawmill("ui");
 
             ThemeDefaults = new UIThemeDummy();
 
@@ -422,16 +427,20 @@ namespace Robust.Client.UserInterface
                 args.PointerLocation.Position / control.UIScale - control.GlobalPosition,
                 args.PointerLocation.Position - control.GlobalPixelPosition);
 
-            _doGuiInput(control, guiArgs, (c, ev) => c.KeyBindDown(ev));
+            _doGuiInput(ref control, guiArgs, (c, ev) => c.KeyBindDown(ev));
 
             if (guiArgs.Handled)
             {
                 args.Handle();
             }
+
+            StartDragDetect(guiArgs);
         }
 
         public void KeyBindUp(BoundKeyEventArgs args)
         {
+            EndDragKeyUp(args);
+
             var control = ControlFocused ?? KeyboardFocused ?? MouseGetControl(args.PointerLocation);
             if (control == null)
             {
@@ -442,7 +451,7 @@ namespace Robust.Client.UserInterface
                 args.PointerLocation.Position / control.UIScale - control.GlobalPosition,
                 args.PointerLocation.Position - control.GlobalPixelPosition);
 
-            _doGuiInput(control, guiArgs, (c, ev) => c.KeyBindUp(ev));
+            _doGuiInput(ref control, guiArgs, (c, ev) => c.KeyBindUp(ev));
 
             // Always mark this as handled.
             // The only case it should not be is if we do not have a control to click on,
@@ -453,6 +462,8 @@ namespace Robust.Client.UserInterface
         public void MouseMove(MouseMoveEventArgs mouseMoveEventArgs)
         {
             _resetTooltipTimer();
+            MouseMoveCheckDrag(mouseMoveEventArgs);
+
             // Update which control is considered hovered.
             var newHovered = MouseGetControl(mouseMoveEventArgs.Position);
             if (newHovered != CurrentlyHovered)
@@ -839,7 +850,7 @@ namespace Robust.Client.UserInterface
         }
 
         private static void _doGuiInput(
-            Control? control,
+            ref Control? control,
             GUIBoundKeyEventArgs guiEvent,
             Action<Control, GUIBoundKeyEventArgs> action,
             bool ignoreStop = false)

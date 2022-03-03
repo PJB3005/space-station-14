@@ -1072,5 +1072,19 @@ namespace Robust.Shared
         /// </summary>
         public static readonly CVarDef<int> HubAdvertiseInterval =
             CVarDef.Create("hub.advertise_interval", 120, CVar.SERVERONLY);
+
+        /*
+         * UI
+         * CVars related to the UI system
+         */
+
+        /// <summary>
+        /// The amount of pixels you need to move while holding click before a drag is detected in UI.
+        /// </summary>
+        /// <remarks>
+        /// This is scaled to the window's UI scale.
+        /// </remarks>
+        public static readonly CVarDef<float> UIDragThreshold =
+            CVarDef.Create("ui.drag_threshold", 5f, CVar.CLIENTONLY | CVar.ARCHIVE);
     }
 }
