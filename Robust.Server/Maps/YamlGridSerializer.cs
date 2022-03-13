@@ -36,7 +36,7 @@ namespace Robust.Server.Maps
             return gridn;
         }
 
-        private static YamlNode SerializeChunk(IMapChunk chunk)
+        private static YamlNode SerializeChunk(MapChunk chunk)
         {
             var root = new YamlMappingNode();
             var value = new YamlScalarNode($"{chunk.X},{chunk.Y}");
@@ -51,7 +51,7 @@ namespace Robust.Server.Maps
             return root;
         }
 
-        private static string SerializeTiles(IMapChunk chunk)
+        private static string SerializeTiles(MapChunk chunk)
         {
             // number of bytes written per tile, because sizeof(Tile) is useless.
             const int structSize = 4;
@@ -68,7 +68,8 @@ namespace Robust.Server.Maps
                     {
                         var tile = chunk.GetTile(x, y);
                         writer.Write(tile.TypeId);
-                        writer.Write(tile.Data);
+                        writer.Write((byte)tile.Flags);
+                        writer.Write(tile.Variant);
                     }
                 }
             }
@@ -129,12 +130,13 @@ namespace Robust.Server.Maps
                 for (ushort x = 0; x < grid.ChunkSize; x++)
                 {
                     var id = reader.ReadUInt16();
-                    var data = reader.ReadUInt16();
+                    var flags = (TileRenderFlag)reader.ReadByte();
+                    var variant = reader.ReadByte();
 
                     var defName = tileDefMapping[id];
                     id = tileDefinitionManager[defName].TileId;
 
-                    var tile = new Tile(id, data);
+                    var tile = new Tile(id, flags, variant);
                     chunk.SetTile(x, y, tile);
                 }
             }

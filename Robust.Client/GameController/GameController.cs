@@ -50,7 +50,6 @@ namespace Robust.Client
         [Dependency] private readonly IClientConsoleHost _console = default!;
         [Dependency] private readonly ITimerManager _timerManager = default!;
         [Dependency] private readonly IClientEntityManager _entityManager = default!;
-        [Dependency] private readonly IEntityLookup _lookup = default!;
         [Dependency] private readonly IPlacementManager _placementManager = default!;
         [Dependency] private readonly IClientGameStateManager _gameStateManager = default!;
         [Dependency] private readonly IOverlayManagerInternal _overlayManager = default!;
@@ -472,7 +471,6 @@ namespace Robust.Client
                 // The last real tick is the current tick! This way we won't be in "prediction" mode.
                 _gameTiming.LastRealTick = _gameTiming.CurTick;
                 _entityManager.TickUpdate(frameEventArgs.DeltaSeconds, noPredictions: false);
-                _lookup.Update();
             }
 
             _modLoader.BroadcastUpdate(ModUpdateLevel.PostEngine, frameEventArgs);
@@ -577,7 +575,6 @@ namespace Robust.Client
 
             _networkManager.Shutdown("Client shutting down");
             _midiManager.Shutdown();
-            IoCManager.Resolve<IEntityLookup>().Shutdown();
             _entityManager.Shutdown();
             _clyde.Shutdown();
             _clydeAudio.Shutdown();

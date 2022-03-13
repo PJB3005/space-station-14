@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Robust.Shared.GameObjects;
 using Robust.Shared.GameStates;
+using Robust.Shared.Log;
 using Robust.Shared.Maths;
 using Robust.Shared.Physics;
 using Robust.Shared.Timing;
@@ -41,19 +42,19 @@ internal sealed class NetworkedMapManager : MapManager, INetworkedMapManager
         _chunkDeletionHistory.Remove(gridId);
     }
 
-    public override void ChunkRemoved(MapChunk chunk)
+    public override void ChunkRemoved(GridId gridId, MapChunk chunk)
     {
-        base.ChunkRemoved(chunk);
-        if (!_chunkDeletionHistory.TryGetValue(chunk.GridId, out var chunks))
+        base.ChunkRemoved(gridId, chunk);
+        if (!_chunkDeletionHistory.TryGetValue(gridId, out var chunks))
         {
             chunks = new List<(GameTick tick, Vector2i indices)>();
-            _chunkDeletionHistory[chunk.GridId] = chunks;
+            _chunkDeletionHistory[gridId] = chunks;
         }
 
         chunks.Add((GameTiming.CurTick, chunk.Indices));
 
         // Seemed easier than having this method on GridFixtureSystem
-        if (!TryGetGrid(chunk.GridId, out var grid) ||
+        if (!TryGetGrid(gridId, out var grid) ||
             !EntityManager.TryGetComponent(grid.GridEntityId, out PhysicsComponent? body) ||
             chunk.Fixtures.Count == 0)
             return;
@@ -108,7 +109,6 @@ internal sealed class NetworkedMapManager : MapManager, INetworkedMapManager
                         tileBuffer[x * grid.ChunkSize + y] = chunk.GetTile((ushort)x, (ushort)y);
                     }
                 }
-
                 chunkData.Add(new GameStateMapData.ChunkDatum(index, tileBuffer));
             }
 
@@ -222,6 +222,7 @@ internal sealed class NetworkedMapManager : MapManager, INetworkedMapManager
                         if (compChange.State is not MapComponentState mapCompState || mapCompState.MapId != mapId)
                             continue;
 
+                        DebugTools.Assert(compChange.Created, $"new map {mapId} is in CreatedMaps, but compState isn't marked as created.");
                         mapEuid = entityState.Uid;
                         goto BreakMapEntSearch;
                     }
@@ -255,6 +256,7 @@ internal sealed class NetworkedMapManager : MapManager, INetworkedMapManager
                         if (compState.State is not MapGridComponentState gridCompState || gridCompState.GridIndex != gridId)
                             continue;
 
+                        DebugTools.Assert(compState.Created, $"new grid {gridId} is in CreatedGrids, but compState isn't marked as created.");
                         gridEuid = entityState.Uid;
                         goto BreakGridEntSearch;
                     }
@@ -308,7 +310,7 @@ internal sealed class NetworkedMapManager : MapManager, INetworkedMapManager
                         for (ushort y = 0; y < grid.ChunkSize; y++)
                         {
                             var tile = chunkData.TileData[counter++];
-                            if (chunk.GetTileRef(x, y).Tile != tile)
+                            if (chunk.GetTile(x, y) != tile)
                             {
                                 chunk.SetTile(x, y, tile);
                                 modified.Add((new Vector2i(chunk.X * grid.ChunkSize + x, chunk.Y * grid.ChunkSize + y), tile));
@@ -324,7 +326,7 @@ internal sealed class NetworkedMapManager : MapManager, INetworkedMapManager
                 {
                     var chunk = grid.GetChunk(chunkData.Index);
                     chunk.SuppressCollisionRegeneration = false;
-                    chunk.RegenerateCollision();
+                    grid.RegenerateCollision(chunk);
                 }
 
                 foreach (var chunkData in gridDatum.DeletedChunkData)
