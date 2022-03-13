@@ -83,6 +83,9 @@ namespace Robust.Client.Graphics.Clyde
                     case EventWindowContentScale cs:
                         ProcessEventWindowContentScale(cs);
                         break;
+                    case EventInputModeChange im:
+                        ProcessEventInputModeChange(im);
+                        break;
                     default:
                         _sawmill.Error($"Unknown GLFW event type: {evb.GetType()}");
                         break;
@@ -249,6 +252,15 @@ namespace Robust.Client.Graphics.Clyde
 
                 windowReg.IsFocused = ev.Focused;
                 _clyde.SendWindowFocus(new WindowFocusedEventArgs(ev.Focused, windowReg.Handle));
+            }
+
+            private void ProcessEventInputModeChange(EventInputModeChange ev)
+            {
+                var windowReg = FindWindow(ev.Window);
+                if (windowReg == null)
+                    return;
+
+                _clyde.SendInputModeChanged();
             }
         }
     }

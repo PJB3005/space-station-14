@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using OpenToolkit;
 using OpenToolkit.Graphics.OpenGL4;
+using Robust.Client.Input;
 using Robust.Client.Map;
 using Robust.Client.ResourceManagement;
 using Robust.Client.UserInterface;
@@ -12,6 +13,7 @@ using Robust.Shared;
 using Robust.Shared.Configuration;
 using Robust.Shared.GameObjects;
 using Robust.Shared.IoC;
+using Robust.Shared.Localization;
 using Robust.Shared.Log;
 using Robust.Shared.Map;
 using Robust.Shared.Timing;
@@ -35,6 +37,8 @@ namespace Robust.Client.Graphics.Clyde
         [Dependency] private readonly IEntitySystemManager _entitySystemManager = default!;
         [Dependency] private readonly IGameTiming _gameTiming = default!;
         [Dependency] private readonly IConfigurationManager _cfg = default!;
+        [Dependency] private readonly ILocalizationManager _loc = default!;
+        [Dependency] private readonly IInputManager _inputManager = default!;
 
         private GLUniformBuffer<ProjViewMatrices> ProjViewUBO = default!;
         private GLUniformBuffer<UniformConstants> UniformConstantsUBO = default!;
@@ -86,6 +90,8 @@ namespace Robust.Client.Graphics.Clyde
             _cfg.OnValueChanged(CVars.DisplaySoftShadows, SoftShadowsChanged, true);
             // I can't be bothered to tear down and set these threads up in a cvar change handler.
             _threadWindowBlit = _cfg.GetCVar(CVars.DisplayThreadWindowBlit);
+
+            InitKeys();
 
             return InitWindowing();
         }

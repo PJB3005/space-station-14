@@ -352,7 +352,7 @@ namespace Robust.Client.Graphics.Clyde
                 SendEvent(new EventWindowCreate(new GlfwWindowCreateResult(reg, null), tcs));
             }
 
-            private static void WinThreadWinDestroy(CmdWinDestroy cmd)
+            private void WinThreadWinDestroy(CmdWinDestroy cmd)
             {
                 var window = (Window*) cmd.Window;
 
@@ -369,6 +369,8 @@ namespace Robust.Client.Graphics.Clyde
                         GWLP.GWLP_HWNDPARENT,
                         0);
                 }
+
+                WndProcCloseWindow(window);
 
                 GLFW.DestroyWindow((Window*) cmd.Window);
             }
@@ -470,6 +472,8 @@ namespace Robust.Client.Graphics.Clyde
                 // Check if window failed to create.
                 if (window == null)
                     return null;
+
+                HookWndProc(window);
 
                 if (parameters.Maximized)
                 {

@@ -56,65 +56,72 @@ namespace Robust.Client.Graphics.Clyde
 
             private void OnGlfwChar(Window* window, uint codepoint)
             {
-                SendEvent(new EventChar((nint) window, codepoint));
+                SendEvent(new EventChar((nint)window, codepoint));
             }
 
             private void OnGlfwCursorPos(Window* window, double x, double y)
             {
                 // System.Console.WriteLine($"{(nint)window:X16}: {x},{y}");
-                SendEvent(new EventCursorPos((nint) window, x, y));
+                SendEvent(new EventCursorPos((nint)window, x, y));
             }
 
             private void OnGlfwCursorEnter(Window* window, bool entered)
             {
                 // System.Console.WriteLine($"{(nint)window:X16}: {entered}");
-                SendEvent(new EventCursorEnter((nint) window, entered));
+                SendEvent(new EventCursorEnter((nint)window, entered));
             }
 
             private void OnGlfwKey(Window* window, Keys key, int scanCode, InputAction action, KeyModifiers mods)
             {
-                SendEvent(new EventKey((nint) window, key, scanCode, action, mods));
+                SendEvent(new EventKey((nint)window, key, scanCode, action, mods));
             }
 
             private void OnGlfwMouseButton(Window* window, MouseButton button, InputAction action, KeyModifiers mods)
             {
-                SendEvent(new EventMouseButton((nint) window, button, action, mods));
+                SendEvent(new EventMouseButton((nint)window, button, action, mods));
             }
 
             private void OnGlfwScroll(Window* window, double offsetX, double offsetY)
             {
-                SendEvent(new EventScroll((nint) window, offsetX, offsetY));
+                SendEvent(new EventScroll((nint)window, offsetX, offsetY));
             }
 
             private void OnGlfwWindowClose(Window* window)
             {
-                SendEvent(new EventWindowClose((nint) window));
+                SendEvent(new EventWindowClose((nint)window));
             }
 
             private void OnGlfwWindowSize(Window* window, int width, int height)
             {
                 GLFW.GetFramebufferSize(window, out var fbW, out var fbH);
-                SendEvent(new EventWindowSize((nint) window, width, height, fbW, fbH));
+                SendEvent(new EventWindowSize((nint)window, width, height, fbW, fbH));
             }
 
             private void OnGlfwWindowPos(Window* window, int x, int y)
             {
-                SendEvent(new EventWindowPos((nint) window, x, y));
+                SendEvent(new EventWindowPos((nint)window, x, y));
             }
 
             private void OnGlfwWindowContentScale(Window* window, float xScale, float yScale)
             {
-                SendEvent(new EventWindowContentScale((nint) window, xScale, yScale));
+                SendEvent(new EventWindowContentScale((nint)window, xScale, yScale));
             }
 
             private void OnGlfwWindowIconify(Window* window, bool iconified)
             {
-                SendEvent(new EventWindowIconify((nint) window, iconified));
+                SendEvent(new EventWindowIconify((nint)window, iconified));
             }
 
             private void OnGlfwWindowFocus(Window* window, bool focused)
             {
-                SendEvent(new EventWindowFocus((nint) window, focused));
+                SendEvent(new EventWindowFocus((nint)window, focused));
+            }
+
+            // Not raised by GLFW directly, but inside the WndProc by us, so close enough.
+            private void OnKeyboardModeChange(Window* window)
+            {
+                ReloadKeyMap();
+                SendEvent(new EventInputModeChange((nint)window));
             }
 
             // NOTE: events do not correspond 1:1 to GLFW events
@@ -204,6 +211,11 @@ namespace Robust.Client.Graphics.Clyde
             (
                 nint Window,
                 bool Focused
+            ) : EventBase;
+
+            private record EventInputModeChange
+            (
+                nint Window
             ) : EventBase;
 
             private record EventMonitorSetup

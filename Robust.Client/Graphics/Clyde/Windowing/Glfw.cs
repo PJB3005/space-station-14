@@ -1,11 +1,8 @@
-﻿using System;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 using OpenToolkit.GraphicsLibraryFramework;
-using Robust.Client.Input;
 using Robust.Shared;
 using Robust.Shared.Configuration;
 using Robust.Shared.IoC;
-using Robust.Shared.Localization;
 using Robust.Shared.Log;
 
 namespace Robust.Client.Graphics.Clyde
@@ -16,8 +13,6 @@ namespace Robust.Client.Graphics.Clyde
         {
             [Dependency] private readonly ILogManager _logManager = default!;
             [Dependency] private readonly IConfigurationManager _cfg = default!;
-            [Dependency] private readonly ILocalizationManager _loc = default!;
-            [Dependency] private readonly IInputManager _inputManager = default!;
 
             private readonly Clyde _clyde;
 
@@ -41,7 +36,6 @@ namespace Robust.Client.Graphics.Clyde
 #if DEBUG
                 _cfg.OnValueChanged(CVars.DisplayWin32Experience, b => _win32Experience = b, true);
 #endif
-                _cfg.OnValueChanged(CVars.DisplayUSQWERTYHotkeys, ReInitKeyMap);
 
                 InitChannels();
 
@@ -50,10 +44,12 @@ namespace Robust.Client.Graphics.Clyde
                     return false;
                 }
 
+                _implStatic = this;
+
                 SetupGlobalCallbacks();
                 InitMonitors();
                 InitCursors();
-                InitKeyMap();
+                ReloadKeyMap();
 
                 return true;
             }
@@ -63,20 +59,15 @@ namespace Robust.Client.Graphics.Clyde
                 if (_glfwInitialized)
                 {
                     _sawmill.Debug("Terminating GLFW.");
-                    _cfg.UnsubValueChanged(CVars.DisplayUSQWERTYHotkeys, ReInitKeyMap);
                     GLFW.Terminate();
                 }
+
+                _implStatic = null;
             }
 
             public void FlushDispose()
             {
                 // Not currently used
-            }
-
-            private void ReInitKeyMap(bool onValueChanged)
-            {
-                InitKeyMap();
-                _inputManager.InputModeChanged();
             }
 
             private bool InitGlfw()
