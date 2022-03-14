@@ -62,7 +62,7 @@ namespace Robust.Client.Graphics.Clyde
             private void OnGlfwCursorPos(Window* window, double x, double y)
             {
                 // System.Console.WriteLine($"{(nint)window:X16}: {x},{y}");
-                SendEvent(new EventCursorPos((nint)window, x, y));
+                SendEvent(new EventCursorPos(CalcExtendedMousePosData(window, x, y)));
             }
 
             private void OnGlfwCursorEnter(Window* window, bool entered)
@@ -138,9 +138,7 @@ namespace Robust.Client.Graphics.Clyde
             ) : EventBase;
 
             private record EventCursorPos(
-                nint Window,
-                double XPos,
-                double YPos
+                ExtendedMousePosData Pos
             ) : EventBase;
 
             private record EventCursorEnter(

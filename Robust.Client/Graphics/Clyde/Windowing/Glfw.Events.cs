@@ -7,7 +7,7 @@ namespace Robust.Client.Graphics.Clyde
 {
     partial class Clyde
     {
-        private partial class GlfwWindowingImpl
+        private unsafe partial class GlfwWindowingImpl
         {
             public void ProcessEvents(bool single=false)
             {
@@ -99,17 +99,25 @@ namespace Robust.Client.Graphics.Clyde
 
             private void ProcessEventCursorPos(EventCursorPos ev)
             {
-                var windowReg = FindWindow(ev.Window);
+                var windowReg = FindWindow(ev.Pos.SourceWindow);
                 if (windowReg == null)
                     return;
 
-                var newPos = ((float) ev.XPos, (float) ev.YPos) * windowReg.PixelRatio;
+                var newPos = (ev.Pos.SourcePos.X, ev.Pos.SourcePos.Y) * windowReg.PixelRatio;
                 var delta = newPos - windowReg.LastMousePos;
                 windowReg.LastMousePos = newPos;
 
                 _clyde._currentHoveredWindow = windowReg;
 
-                _clyde.SendMouseMove(new MouseMoveEventArgs(delta, new ScreenCoordinates(newPos, windowReg.Id)));
+                ScreenCoordinates over = default;
+                if (ev.Pos.OverWindow != null)
+                {
+                    // TODO: DPI?
+                    var overWindow = FindWindow(ev.Pos.OverWindow);
+                    over = new ScreenCoordinates(ev.Pos.OverPos, overWindow!.Id);
+                }
+
+                _clyde.SendMouseMove(new MouseMoveEventArgs(delta, new ScreenCoordinates(newPos, windowReg.Id), over));
             }
 
             private void ProcessEventCursorEnter(EventCursorEnter ev)

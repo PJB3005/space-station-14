@@ -461,11 +461,15 @@ namespace Robust.Client.UserInterface
 
         public void MouseMove(MouseMoveEventArgs mouseMoveEventArgs)
         {
+            var mousePos = mouseMoveEventArgs.OverPosition == default
+                ? mouseMoveEventArgs.Position
+                : mouseMoveEventArgs.OverPosition;
+
             _resetTooltipTimer();
-            MouseMoveCheckDrag(mouseMoveEventArgs);
+            MouseMoveCheckDrag(mousePos);
 
             // Update which control is considered hovered.
-            var newHovered = MouseGetControl(mouseMoveEventArgs.Position);
+            var newHovered = MouseGetControl(mousePos);
             if (newHovered != CurrentlyHovered)
             {
                 _clearTooltip();
@@ -487,10 +491,10 @@ namespace Robust.Client.UserInterface
             var target = ControlFocused ?? newHovered;
             if (target != null)
             {
-                var pos = mouseMoveEventArgs.Position.Position;
+                var pos = mousePos.Position;
                 var guiArgs = new GUIMouseMoveEventArgs(mouseMoveEventArgs.Relative / target.UIScale,
                     target,
-                    pos / target.UIScale, mouseMoveEventArgs.Position,
+                    pos / target.UIScale, mousePos,
                     pos / target.UIScale - target.GlobalPosition,
                     pos - target.GlobalPixelPosition);
 

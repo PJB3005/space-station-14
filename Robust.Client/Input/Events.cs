@@ -143,11 +143,22 @@ namespace Robust.Client.Input
         /// </summary>
         public Vector2 Relative { get; }
 
+        /// <summary>
+        /// The effective window position the mouse is currently over.
+        /// </summary>
+        /// <remarks>
+        /// This does not match the normal position if a mouse is held while dragging outside of a window.
+        /// In this case, the OS reports a mouse position outside the bounds of the window relative to the client area.
+        /// We manually calculate this over position via OS hit testing, to aid in drag-drop operations in-engine.
+        /// </remarks>
+        public ScreenCoordinates OverPosition { get; }
+
         // ALL the parameters!
-        public MouseMoveEventArgs(Vector2 relative, ScreenCoordinates position)
+        public MouseMoveEventArgs(Vector2 relative, ScreenCoordinates position, ScreenCoordinates overPosition)
             : base(position)
         {
             Relative = relative;
+            OverPosition = overPosition;
         }
     }
 

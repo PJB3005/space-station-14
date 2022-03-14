@@ -110,15 +110,15 @@ internal sealed partial class UserInterfaceManager
         _dragDetectStartEvent = null;
     }
 
-    private void MouseMoveCheckDrag(MouseMoveEventArgs mouseMoveEventArgs)
+    private void MouseMoveCheckDrag(ScreenCoordinates mousePos)
     {
         switch (_dragState)
         {
             case DragState.Detecting:
             {
                 // TODO: DPI.
-                var diff = _dragStart.Position - mouseMoveEventArgs.Position.Position;
-                var startDrag = _dragStart.Window != mouseMoveEventArgs.Position.Window
+                var diff = _dragStart.Position - mousePos.Position;
+                var startDrag = _dragStart.Window != mousePos.Window
                                 || diff.LengthSquared > _dragThresholdSquared;
 
                 if (!startDrag)
@@ -160,7 +160,7 @@ internal sealed partial class UserInterfaceManager
             case DragState.Dragging:
             {
                 // TODO: DPI?
-                var curControl = MouseGetControl(mouseMoveEventArgs.Position);
+                var curControl = MouseGetControl(mousePos);
                 _sawmill.Debug($"A: {Control.GetDebugPath(curControl)}");
                 var newOverSet = new HashSet<Control>();
                 var oldOverSet = new HashSet<Control>(_currentlyDraggingOver);
