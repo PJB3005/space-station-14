@@ -48,6 +48,9 @@ internal partial class Clyde
                 return;
 
             var hWnd = (HWND) GLFW.GetWin32Window(window);
+            var oldFunc = _hWndData[hWnd].OldWindowProc;
+            // Allow GLFW to handle any messages raised when the window is closed itself, we don't care anymore.
+            SetWindowLongPtrW(hWnd, GWL_WNDPROC, (nint)oldFunc);
             _hWndData.Remove(hWnd);
         }
 
