@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Robust.Client.Input;
 using Robust.Shared.Input;
 using Robust.Shared.Map;
 
@@ -79,17 +78,38 @@ internal sealed partial class UserInterfaceManager
             case DragState.Dragging:
                 _sawmill.Debug("Ending drag");
 
-                var dropArgs = new DragDropEventArgs(_dragOperation!);
-                foreach (var control in _currentlyDraggingOver)
+                // TODO: Clean up this coordinate conversion code. This is crap.
+                var uiScale = _currentlyDraggingOver[0].UIScale;
+                var scaledPos = eventArgs.PointerLocation.Position / uiScale;
+
+                var handled = false;
+
+                var i = 0;
+                for (; i < _currentlyDraggingOver.Count; i++)
                 {
+                    var control = _currentlyDraggingOver[i];
+                    // TODO: This is O(n^2).
+                    var relative = scaledPos - control.GlobalPosition;
+                    var dropArgs = new DragDropEventArgs(_dragOperation!, relative);
+
                     control.DragDrop(dropArgs);
 
                     if (dropArgs.Handled)
+                    {
+                        handled = true;
                         break;
+                    }
                 }
 
-                if (!dropArgs.Handled)
+                if (!handled)
                     _dragOperation!.Drop();
+
+                // Go over remaining controls not dropped onto, telling them DragLeave.
+                for (i++; i < _currentlyDraggingOver.Count; i++)
+                {
+                    var control = _currentlyDraggingOver[i];
+                    control.DragLeave(new DragLeaveEventArgs(_dragOperation!));
+                }
 
                 _currentlyDraggingOver.Clear();
                 _dragOperation = null;
