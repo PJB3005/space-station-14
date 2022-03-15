@@ -18,6 +18,16 @@ namespace Robust.Shared.Utility
         }
 
         /// <summary>
+        ///     An assertion that will always <see langword="throw" /> an exception.
+        /// </summary>
+        /// <param name="message">Exception message.</param>
+        [ContractAnnotation("=> halt")]
+        public static void Fail(string message)
+        {
+            throw new DebugAssertException(message);
+        }
+
+        /// <summary>
         ///     An assertion that will <see langword="throw" /> an exception if the
         ///     <paramref name="condition" /> is not true.
         /// </summary>
