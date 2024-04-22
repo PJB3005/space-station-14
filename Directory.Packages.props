@@ -25,7 +25,6 @@
     <PackageVersion Include="Microsoft.Extensions.Primitives" Version="8.0.0" />
     <PackageVersion Include="Microsoft.ILVerification" Version="8.0.0" />
     <PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.0" />
-    <PackageVersion Include="Microsoft.NET.ILLink.Tasks" Version="8.0.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageVersion Include="Microsoft.Win32.Registry" Version="5.0.0" />
     <PackageVersion Include="Moq" Version="4.20.70" />
@@ -60,5 +59,7 @@
     <PackageVersion Include="prometheus-net" Version="8.2.1" />
     <PackageVersion Include="prometheus-net.DotNetRuntime" Version="4.4.0" />
     <PackageVersion Include="PolySharp" Version="1.14.1" />
+    <PackageVersion Include="Microsoft.DotNet.ILCompiler.LLVM" Version="9.0.0-alpha.1.24173.1" />
+    <PackageVersion Include="runtime.win-x64.Microsoft.DotNet.ILCompiler.LLVM" Version="9.0.0-alpha.1.24173.1" />
   </ItemGroup>
 </Project>

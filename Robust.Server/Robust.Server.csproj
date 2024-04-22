@@ -30,7 +30,6 @@
     <PackageReference Include="SpaceWizards.Sodium" PrivateAssets="compile" />
     <PackageReference Include="SharpZstd.Interop" PrivateAssets="compile" />
     <PackageReference Condition="'$(RobustToolsBuild)' == 'True'" Include="JetBrains.Profiler.Api" />
-    <PackageReference Include="Microsoft.NET.ILLink.Tasks" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lidgren.Network\Lidgren.Network.csproj" />
