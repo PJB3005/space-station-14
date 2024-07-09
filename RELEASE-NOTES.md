@@ -40,6 +40,7 @@ END TEMPLATE-->
 ### New features
 
 * Added command usage with types to Toolshed command help.
+* `IResourceManager.NotifyFilesAdded` to indicate new files have been added. This is intended to allow content to fix https://github.com/space-wizards/space-station-14/issues/29463.
 
 ### Bugfixes
 

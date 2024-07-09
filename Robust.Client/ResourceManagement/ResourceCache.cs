@@ -230,6 +230,17 @@ internal sealed partial class ResourceCache : ResourceManager, IResourceCacheInt
         OnRsiLoaded?.Invoke(eventArgs);
     }
 
+    public override void NotifyFilesAdded()
+    {
+        base.NotifyFilesAdded();
+
+        // Invalidate NonExistent files as they may have come into existence.
+        foreach (var typeData in _cachedResources.Values)
+        {
+            typeData.NonExistent.Clear();
+        }
+    }
+
     private sealed class TypeData
     {
         public readonly Dictionary<ResPath, BaseResource> Resources = new();

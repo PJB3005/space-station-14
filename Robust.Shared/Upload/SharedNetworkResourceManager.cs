@@ -53,6 +53,8 @@ public abstract class SharedNetworkResourceManager : IDisposable
     protected virtual void ResourceUploadMsg(NetworkResourceUploadMessage msg)
     {
         ContentRoot.AddOrUpdateFile(msg.RelativePath, msg.Data);
+        ResourceManager.NotifyFilesAdded();
+
         _replay.RecordReplayMessage(new ReplayResourceUploadMsg { RelativePath = msg.RelativePath, Data = msg.Data });
     }
 

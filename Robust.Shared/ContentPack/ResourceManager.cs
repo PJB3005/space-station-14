@@ -119,6 +119,10 @@ namespace Robust.Shared.ContentPack
             }
         }
 
+        public virtual void NotifyFilesAdded()
+        {
+        }
+
         private static ResPath SanitizePrefix(ResPath? prefix)
         {
             if (prefix == null)

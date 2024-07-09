@@ -23,7 +23,26 @@ namespace Robust.Shared.ContentPack
         /// </summary>
         /// <param name="prefix"></param>
         /// <param name="loader"></param>
+        /// <seealso cref="NotifyFilesAdded"/>
         void AddRoot(ResPath prefix, IContentRoot loader);
+
+        /// <summary>
+        ///     Notify the resource manager that new files have been added to the underlying content roots.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This should be called when using a custom <see cref="IContentRoot"/> registered via <see cref="AddRoot"/>,
+        /// and new files become available in that root at runtime.
+        /// </para>
+        /// <para>
+        /// Calling this function may cause the resource manager to clear some cached information,
+        /// such as absence of files.
+        /// </para>
+        /// <para>
+        /// This function does not need to be called manually directly after calling <see cref="AddRoot"/>.
+        /// </para>
+        /// </remarks>
+        void NotifyFilesAdded();
 
         /// <summary>
         ///     Read a file from the mounted content roots.
