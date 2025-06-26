@@ -31,16 +31,29 @@ public sealed class PrototypeInstantiationAnalyzer : DiagnosticAnalyzer
             if (prototypeInterface == null)
                 return;
 
-            ctx.RegisterOperationAction(symContext => Check(prototypeInterface, symContext), OperationKind.ObjectCreation);
+            ctx.RegisterOperationAction(symContext => CheckObject(prototypeInterface, symContext), OperationKind.ObjectCreation);
+            ctx.RegisterOperationAction(symContext => CheckArray(prototypeInterface, symContext), OperationKind.ArrayCreation);
+
         });
     }
 
-    private static void Check(INamedTypeSymbol prototypeInterface, OperationAnalysisContext ctx)
+    private static void CheckObject(INamedTypeSymbol prototypeInterface, OperationAnalysisContext ctx)
     {
         if (ctx.Operation is not IObjectCreationOperation { Type: { } resultType } creationOp)
             return;
 
         if (!TypeSymbolHelper.ImplementsInterface(resultType, prototypeInterface))
+            return;
+
+        ctx.ReportDiagnostic(Diagnostic.Create(Rule, creationOp.Syntax.GetLocation()));
+    }
+
+    private static void CheckArray(INamedTypeSymbol prototypeInterface, OperationAnalysisContext ctx)
+    {
+        if (ctx.Operation is not IArrayCreationOperation { Type: IArrayTypeSymbol resultType } creationOp)
+            return;
+
+        if (!TypeSymbolHelper.ImplementsInterface(resultType.ElementType, prototypeInterface))
             return;
 
         ctx.ReportDiagnostic(Diagnostic.Create(Rule, creationOp.Syntax.GetLocation()));

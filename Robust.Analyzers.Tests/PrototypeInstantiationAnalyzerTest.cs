@@ -52,13 +52,17 @@ public sealed class PrototypeInstantiationAnalyzerTest
             {
                 public static FooPrototype Real()
                 {
+                    var foo = new FooPrototype[2];
                     return new FooPrototype();
                 }
             }
             """;
 
         await Verifier(code,
-            // /0/Test0.cs(15,16): warning RA0039: Do not instantiate prototypes directly. Prototypes should always be instantiated by the prototype manager.
-            VerifyCS.Diagnostic().WithSpan(15, 16, 15, 34));
+
+            // /0/Test0.cs(15,19): warning RA0039: Do not instantiate prototypes directly. Prototypes should always be instantiated by the prototype manager.
+            VerifyCS.Diagnostic().WithSpan(15, 19, 15, 38),
+            // /0/Test0.cs(16,16): warning RA0039: Do not instantiate prototypes directly. Prototypes should always be instantiated by the prototype manager.
+            VerifyCS.Diagnostic().WithSpan(16, 16, 16, 34));
     }
 }
